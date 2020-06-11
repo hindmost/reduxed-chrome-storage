@@ -1,0 +1,52 @@
+{
+  "name": "reduxed-chrome-storage",
+  "version": "1.0.0",
+  "description": "Redux interface to chrome.storage, the only way to get Redux working in event-driven (non-persistent) Chrome extensions",
+  "license": "MIT",
+  "repository": "github:hindmost/reduxed-chrome-storage",
+  "bugs": "https://github.com/hindmost/reduxed-chrome-storage/issues",
+  "keywords": [
+    "redux",
+    "chrome",
+    "extension",
+    "chrome-extension",
+    "storage",
+    "chrome-storage",
+    "store",
+    "state"
+  ],
+  "main": "lib/index.umd.js",
+  "module": "lib/index.esm.js",
+  "files": [
+    "lib"
+  ],
+  "dependencies": {
+    "lodash.clonedeep": "^4.5.0",
+    "lodash.isequal": "^4.5.0",
+    "lodash.mergewith": "^4.6.0"
+  },
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "eslint": "^6.0.0",
+    "lodash": "^4.17.15",
+    "mocha": "^7.1.2",
+    "redux": "^4.0.5",
+    "reify": "^0.20.12",
+    "rollup": "^2.10.0",
+    "@rollup/plugin-buble": "^0.21.0",
+    "@rollup/plugin-commonjs": "^12.0.0",
+    "@rollup/plugin-node-resolve": "^8.0.0",
+    "rollup-plugin-terser": "^5.3.0",
+    "sinon": "^9.0.0"
+  },
+  "scripts": {
+    "prebuild": "npm run lint",
+    "build": "rollup -c",
+    "dev": "rollup -c -w",
+    "lint": "eslint src",
+    "lint:test": "eslint test",
+    "pretest": "npm run lint:test",
+    "test": "mocha -r reify",
+    "prepublishOnly": "npm run build"
+  }
+}
