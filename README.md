@@ -21,9 +21,8 @@ npm install reduxed-chrome-storage
 import { createStore } from 'redux';
 import storeCreatorFactory from 'reduxed-chrome-storage';
 import reducer from './reducer';
-/* global chrome */
 
-const storeCreator = storeCreatorFactory({ createStore, chrome });
+const storeCreator = storeCreatorFactory({ createStore });
 storeCreator(reducer).then(store => {
   const state = store.getState();
   ...
@@ -35,7 +34,7 @@ storeCreator(reducer).then(store => {
 ```js
 ...
 async () => {
-  const storeCreator = storeCreatorFactory({ createStore, chrome });
+  const storeCreator = storeCreatorFactory({ createStore });
   const store = await storeCreator(reducer);
   ...
 }
@@ -47,7 +46,7 @@ async () => {
 ```js
 ...
 async () => {
-  const store = await storeCreatorFactory({ createStore, chrome }) (reducer);
+  const store = await storeCreatorFactory({ createStore }) (reducer);
   ...
 }
 ...
