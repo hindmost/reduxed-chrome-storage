@@ -49,9 +49,9 @@ export default class ReduxedStorage {
       // Try to restore the last state stored in chrome.storage, if any
       this.storage.load(lastState => {
         const mergeOrReplace = (data0, data) =>
-          typeof data0 === 'object' && !('length' in data0)? 
+          typeof data0 === 'object' && !Array.isArray(data0)? 
             mergeWith({}, data0, data, (obj, src) =>
-              typeof obj === 'object' && 'length' in obj? src : undefined
+              Array.isArray(obj)? src : undefined
             )
             : data;
         let state = lastState?
