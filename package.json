@@ -1,6 +1,6 @@
 {
   "name": "reduxed-chrome-storage",
-  "version": "1.0.5",
+  "version": "1.0.10",
   "description": "Redux interface to chrome.storage, the only way to get Redux working in event-driven (non-persistent) Chrome extensions",
   "license": "MIT",
   "repository": "github:hindmost/reduxed-chrome-storage",

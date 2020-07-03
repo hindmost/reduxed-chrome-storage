@@ -3,12 +3,13 @@ import sinon from 'sinon';
 import { createStore, combineReducers } from 'redux';
 import _ from 'lodash';
 
-import reduxedStorageCreatorFactory from '../src';
 import chrome from './mock/chrome.js';
+import reduxedStorageCreatorFactory from '../src';
 import { addTodo, toggleTodo } from './samples/todos/actions';
 import { setVisibilityFilter, VisibilityFilters } from './samples/filter/actions';
 import todosReducer from './samples/todos/reducers';
 import filterReducer from './samples/filter/reducers';
+global.chrome = chrome;
 
 describe('Use Cases', () => {
 
@@ -20,7 +21,7 @@ describe('Use Cases', () => {
 
     it("create two stores representing background script and popup page (for example), both with TodoList reducer; add a change listener on the 1st store; dispatch an action on the 2nd store; as a result, the listener should be called once and getState() calls on both stores should return the same value", async () => {
       const storeOfBg = await reduxedStorageCreatorFactory({
-        createStore, chrome
+        createStore
       })(
         todosReducer
       );
@@ -28,7 +29,7 @@ describe('Use Cases', () => {
       storeOfBg.subscribe(spyOnBg);
 
       const storeOfPopup = await reduxedStorageCreatorFactory({
-        createStore, chrome
+        createStore
       })(
         todosReducer
       );
@@ -48,7 +49,7 @@ describe('Use Cases', () => {
 
     it("create a store with TodoList reducer; dispatch an action on it; store its current state in a variable; create another store (with the same reducer) representing the next session; as a result, its current state should equal the previously stored value", async () => {
       const storeOfSession1 = await reduxedStorageCreatorFactory({
-        createStore, chrome
+        createStore
       })(
         todosReducer
       );
@@ -61,7 +62,7 @@ describe('Use Cases', () => {
       clock.restore();
 
       const storeOfSession2 = await reduxedStorageCreatorFactory({
-        createStore, chrome
+        createStore
       })(
         todosReducer
       );
@@ -75,7 +76,7 @@ describe('Use Cases', () => {
     it("create a store with combined TodoList+VisibilityFilter reducer; dispatch a TodoList action on it adding one todo; dispatch a VisibilityFilter action on it setting VisibilityFilter to 'SHOW_ACTIVE'; store the current state in a variable; create another store (with the same reducer) representing the next session; as a result, VisibilityFilter property of the current state should equal 'SHOW_ACTIVE', while TodoList property should equal its counterpart in the previously stored state", async () => {
       const combinedReducer = combineReducers({todos: todosReducer, filter: filterReducer});
       const storeOfSession1 = await reduxedStorageCreatorFactory({
-        createStore, chrome
+        createStore
       })(
         combinedReducer
       );
@@ -89,7 +90,7 @@ describe('Use Cases', () => {
       clock.restore();
 
       const storeOfSession2 = await reduxedStorageCreatorFactory({
-        createStore, chrome
+        createStore
       })(
         combinedReducer, {filter: VisibilityFilters.SHOW_ALL}
       );
@@ -104,7 +105,7 @@ describe('Use Cases', () => {
 
     it("create a store with TodoList reducer; dispatch 5 consecutive actions on it adding 3 todos and checking the 1st and 3rd ones as completed; as a result, the current state should equal the predefined value", async () => {
       const store = await reduxedStorageCreatorFactory({
-        createStore, chrome
+        createStore
       })(
         todosReducer
       );
