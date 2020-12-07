@@ -23,7 +23,8 @@ export default class ReduxedStorage {
     this.enhancer = enhancer;
     this.buffLife = bufferLife? Math.min(Math.max(bufferLife, 0), 2000) : 100;
     this.state = initialState;
-    this.buffStore = this.buffState0 = null;
+    this.buffStore = null;
+    this.lastState = null;
     this.listeners = [];
     this.dispatch = this.dispatch.bind(this);
     this.subscribe = this.subscribe.bind(this);
@@ -35,7 +36,7 @@ export default class ReduxedStorage {
     const defaultState = this.createStore(
       this.reducer, undefined, this.enhancer
     ).getState();
-    // Subscribe for changes in chrome.storage
+    // subscribe for changes in chrome.storage
     this.storage.subscribe(data => {
       if (isEqual(data, this.state))
         return;
@@ -46,21 +47,21 @@ export default class ReduxedStorage {
     });
     // return a promise to be resolved when the last state (if any) is restored from chrome.storage
     return new Promise(resolve => {
-      // Try to restore the last state stored in chrome.storage, if any
-      this.storage.load(lastState => {
+      // try to restore the last state stored in chrome.storage, if any
+      this.storage.load(storedState => {
         const mergeOrReplace = (data0, data) =>
           typeof data0 === 'object' && !Array.isArray(data0)? 
             mergeWith({}, data0, data, (obj, src) =>
               Array.isArray(obj)? src : undefined
             )
             : data;
-        let state = lastState?
-          mergeOrReplace(defaultState, lastState) : defaultState;
+        let state = storedState?
+          mergeOrReplace(defaultState, storedState) : defaultState;
         if (initialState) {
           state = mergeOrReplace(state, initialState);
         }
         this.setState(state);
-        if (!isEqual(state, lastState)) {
+        if (!isEqual(state, storedState)) {
           this.storage.save(state);
         }
         resolve(this);
@@ -107,21 +108,35 @@ export default class ReduxedStorage {
    */
   dispatch(action) {
     if (!this.buffStore) {
+      // this.buffStore is to be used with sync actions
       this.buffStore = this.createStore(
         this.reducer, this.state, this.enhancer
       );
-      this.buffState0 = this.buffStore.getState();
+      // this.lastState is shared by both sync and async actions
+      this.lastState = this.buffStore.getState();
       setTimeout(() => {
         this.buffStore = null;
       }, this.buffLife);
     }
-    this.buffStore.subscribe(() => {
-      const state = this.buffStore.getState();
-      if (isEqual(state, this.buffState0))
+    // lastStore, holding an extra reference to the last created store, is to be used with async actions (e.g. via Redux Thunk);
+    // then when this.buffStore is reset to null this variable should still refer to the same store
+    let lastStore = this.buffStore;
+    // set up a one-time state change listener
+    const unsubscribe = lastStore.subscribe(() => {
+      // if this.buffStore is non-empty, use it for getting the current state,
+      // otherwise an async action is implied, so use lastStore instead
+      const state = (this.buffStore || lastStore).getState();
+      // we need a state change to be effective, so the current state should differ from the last saved one
+      if (isEqual(state, this.lastState))
         return;
+      // save the current state in chrome.storage / update this.lastState
       this.storage.save(state);
-      this.buffState0 = state;
+      this.lastState = state;
+      // as we already catched the 1st effective state change, we don't need this listener and lastStore anymore,
+      // so we unsubscribe the former and reset the latter in order to release the related resources
+      unsubscribe();
+      lastStore = null;
     });
-    return this.buffStore.dispatch(action);
+    return lastStore.dispatch(action);
   }
 }
