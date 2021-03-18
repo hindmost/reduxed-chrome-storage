@@ -1,6 +1,4 @@
-import cloneDeep from 'lodash.clonedeep';
-import isEqual from 'lodash.isequal';
-import mergeWith from 'lodash.mergewith';
+import { cloneDeep, isEqual, mergeOrReplace } from './utils';
 
 export default class ReduxedStorage {
   /**
@@ -49,12 +47,6 @@ export default class ReduxedStorage {
     return new Promise(resolve => {
       // try to restore the last state stored in chrome.storage, if any
       this.storage.load(storedState => {
-        const mergeOrReplace = (data0, data) =>
-          typeof data0 === 'object' && !Array.isArray(data0)? 
-            mergeWith({}, data0, data, (obj, src) =>
-              Array.isArray(obj)? src : undefined
-            )
-            : data;
         let state = storedState?
           mergeOrReplace(defaultState, storedState) : defaultState;
         if (initialState) {

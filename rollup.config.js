@@ -33,7 +33,6 @@ export default [
   // ES module build:
   {
     input: 'src/index.js',
-    external: /^lodash/,
     output: {
       file: pkg.module,
       format: 'es'

@@ -2,7 +2,6 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 import { createStore, combineReducers, applyMiddleware } from 'redux';
 import thunk from 'redux-thunk';
-import _ from 'lodash';
 
 import chrome from './mock/chrome.js';
 import reduxedStorageCreatorFactory from '../src';
@@ -98,7 +97,7 @@ describe('Use Cases', () => {
           combinedReducer, {filter: VisibilityFilters.SHOW_ALL}
         );
         const stateOfSession2 = storeOfSession2.getState();
-        expect(_.pick(stateOfSession1, 'todos')).to.eql(_.pick(stateOfSession2, 'todos'));
+        expect(stateOfSession1.todos).to.eql(stateOfSession2.todos);
         expect(stateOfSession2.filter).to.eql(VisibilityFilters.SHOW_ALL);
       });
   
