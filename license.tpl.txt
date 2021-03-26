@@ -1,0 +1,7 @@
+@license
+ReduxedChromeStorage v<%= pkg.version %>
+https://github.com/hindmost/reduxed-chrome-storage
+Copyright (c) Savr Goryaev aka hindmost
+
+This source code is licensed under the MIT license
+https://github.com/hindmost/reduxed-chrome-storage/blob/master/LICENSE

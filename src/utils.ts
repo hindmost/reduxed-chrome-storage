@@ -1,14 +1,14 @@
-export function cloneDeep(o) {
+export function cloneDeep(o: any): any {
   if (o == null || typeof o !== 'object')
     return o;
   if (Array.isArray(o))
     return o.map(v => cloneDeep(v));
-  return Object.keys(o).reduce((acc, key) => {
+  return Object.keys(o).reduce((acc: any, key) => {
     return acc[key] = cloneDeep(o[key]), acc
     }, {});
 }
 
-export function isEqual(a, b) {
+export function isEqual(a: any, b: any): boolean {
   if (a === b)
     return true;
   if (a == null || typeof a !== 'object' || b == null || typeof b !== 'object')
@@ -23,14 +23,14 @@ export function isEqual(a, b) {
   return true;
 }
 
-export function mergeOrReplace(a, b) {
+export function mergeOrReplace(a: any, b: any): any {
   if (Array.isArray(b))
     return cloneDeep(b);
   if (typeof a !== 'object' || Array.isArray(a) || typeof b !== 'object')
     return typeof b !== 'undefined'? b : a;
   return Object.keys(a).concat(
       Object.keys(b).filter(key => !a[key])
-    ).reduce((acc, key) => {
+    ).reduce((acc: any, key) => {
       return acc[key] = mergeOrReplace(a[key], b[key]), acc
     }, {});
 }

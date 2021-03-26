@@ -1,3 +1,2 @@
-/.reify-cache/
-/node_modules/
-/lib/
+node_modules
+dist

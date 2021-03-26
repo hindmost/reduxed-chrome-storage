@@ -1,4 +1,12 @@
-const todos = (state = [], action) => {
+import { AnyAction } from 'redux';
+
+interface Todo {
+  id: number;
+  text?: string;
+  completed?: boolean;
+}
+
+const todos = (state = [], action: AnyAction): Todo[] => {
   switch (action.type) {
     case 'ADD_TODO':
       return [

@@ -1,25 +1,67 @@
-import resolve from '@rollup/plugin-node-resolve';
-import commonjs from '@rollup/plugin-commonjs';
+import typescript from 'rollup-plugin-typescript2';
+import del from 'rollup-plugin-delete';
 import buble from '@rollup/plugin-buble';
 import { terser } from 'rollup-plugin-terser';
+import license from 'rollup-plugin-license';
 import pkg from './package.json';
 
+const input = 'src/index.ts';
+const name = 'reduxedChromeStorage';
+const bubleOpts = {
+  transforms: { dangerousForOf: true },
+  include: ['src/**/*']
+};
+const licenseOpts = {
+  sourcemap: false,
+  banner: {
+    content: { file: 'license.tpl.txt' }
+  }
+}
+
 export default [
-  // minified UMD build:
+  // ES module:
   {
-    input: 'src/index.js',
+    input,
     output: {
-      name: 'reduxedChromeStorage',
+      file: pkg.module,
+      format: 'es'
+    },
+    plugins: [
+      typescript({
+        tsconfigOverride: { compilerOptions: { declaration: true } }
+      }),
+      license(licenseOpts),
+      del({
+        targets: ['dist/*.d.ts', '!dist/index.d.ts'],
+        hook: 'writeBundle'
+      })
+    ]
+  },
+  // UMD Uncompressed:
+  {
+    input,
+    output: {
+      name,
       file: pkg.main,
       format: 'umd'
     },
     plugins: [
-      resolve(),
-      commonjs(),
-      buble({
-        transforms: { dangerousForOf: true },
-        exclude: ['node_modules/**']
-      }),
+      typescript(),
+      buble(bubleOpts),
+      license(licenseOpts)
+    ]
+  },
+  // UMD Compressed:
+  {
+    input,
+    output: {
+      name,
+      file: pkg.unpkg,
+      format: 'umd'
+    },
+    plugins: [
+      typescript(),
+      buble(bubleOpts),
       terser({
         compress: {
           drop_console: true,
@@ -27,15 +69,8 @@ export default [
           unsafe: true,
           unsafe_comps: true
         }
-      })
+      }),
+      license(licenseOpts)
     ]
-  },
-  // ES module build:
-  {
-    input: 'src/index.js',
-    output: {
-      file: pkg.module,
-      format: 'es'
-    }
   }
 ];

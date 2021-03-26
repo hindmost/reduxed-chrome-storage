@@ -1,9 +1,10 @@
 import { expect } from 'chai';
 import { createStore } from 'redux';
 
-import chrome from './mock/chrome.js';
-import reduxedStorageCreatorFactory from '../src';
-global.chrome = chrome;
+import {chrome} from './mock/apis';
+import storeCreatorFactory from '../src';
+
+globalThis.chrome = chrome;
 
 describe('Wrong Usage', () => {
 
@@ -11,7 +12,7 @@ describe('Wrong Usage', () => {
 
     it('if createStore parameter is missing, should throw an exception', () => {
       expect(() => {
-        reduxedStorageCreatorFactory({});
+        storeCreatorFactory({});
       }).to.throw('createStore');
     });
 
@@ -21,7 +22,7 @@ describe('Wrong Usage', () => {
 
     it('if reducer parameter is missing, should throw an exception', () => {
       expect(() => {
-        reduxedStorageCreatorFactory({createStore})();
+        storeCreatorFactory({createStore})();
       }).to.throw('reducer');
     });
 
