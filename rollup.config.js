@@ -14,7 +14,7 @@ const bubleOpts = {
 const licenseOpts = {
   sourcemap: false,
   banner: {
-    content: { file: 'license.tpl.txt' }
+    content: { file: 'src/license.tpl.txt' }
   }
 }
 
