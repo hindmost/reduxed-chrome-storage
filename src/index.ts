@@ -4,7 +4,7 @@ import WrappedBrowserStorage from './WrappedBrowserStorage';
 import { StoreCreator, StoreEnhancer, Reducer } from 'redux';
 import { ExtendedStore } from './types/store';
 import {
-  ChromeNamespace, BrowserNamespace, StorageAreaName
+  ChromeNamespace, BrowserNamespace
 } from './types/apis';
 
 enum Namespace {
@@ -13,6 +13,10 @@ enum Namespace {
 }
 declare const chrome: ChromeNamespace;
 declare const browser: BrowserNamespace;
+
+export {
+  ChromeNamespace, BrowserNamespace
+} from './types/apis';
 
 /**
  * ReduxedChromeStorage creator factory.
@@ -49,10 +53,10 @@ export default function reduxedStorageCreatorFactory({
   storageArea, storageKey, bufferLife
 }: {
   createStore: StoreCreator,
-  namespace?: Namespace,
+  namespace?: string,
   chromeNs?: ChromeNamespace,
   browserNs?: BrowserNamespace,
-  storageArea?: StorageAreaName,
+  storageArea?: string,
   storageKey?: string,
   bufferLife?: number
 }) {
