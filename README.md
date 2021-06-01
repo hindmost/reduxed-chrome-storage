@@ -59,6 +59,30 @@ async () => {
 ...
 ```
 
+### State change listening (special case - only makes sense in Manifest V3 service workers):
+
+```js
+import { createStore } from 'redux';
+import storeCreatorFactory from 'reduxed-chrome-storage';
+import reducer from './reducer';
+
+const changeListener = (store, oldState) => {
+  const currentState = store.getState();
+  ...
+};
+const options = {
+  createStore: createStore,
+  changeListener: changeListener,
+  namespace?: ...,
+  chromeNs?: ...,
+  browserNs?: ...,
+  storageArea?: ...,
+  storageKey?: ...,
+  bufferLife?: ...
+};
+storeCreatorFactory(options)(reducer);
+```
+
 ## Options
 
 ### createStore
@@ -73,14 +97,24 @@ Default: `'chrome'`
 A string to identify the APIs namespace to be used, either `'chrome'` or `'browser'`. If this and the next two options are missing, the chrome namespace is used by default.
 
 ### chromeNs
-Type: `host object`
+Type: `host object` (`ChromeNamespace` in Typescript definition)
 
 The chrome namespace within Manifest V2 extension. If this option is supplied, the previous one is ignored.
 
 ### browserNs
-Type: `host object`
+Type: `host object` (`BrowserNamespace` in Typescript definition)
 
 The browser namespace within Firefox extension, or the chrome namespace within Manifest V3 chrome extension. You may pass the chrome namespace within Manifest V3 to make this library use Promise-based APIs under the hood. If this option is supplied, the previous two are ignored.
+
+### changeListener
+Type: `function` (`ChangeListener` in Typescript definition)<br>
+
+A function to be called whenever the state changes, receives two parameters:
+
+1. one-time store - container of the current state;
+2. the previous state.
+
+This option only makes sense in Manifest V3 service workers or event-driven background scripts. If this option is supplied, the async store creator returned by the factory is to only be used for holding the arguments to be passed to the original `createStore` upon a one-time store creation.
 
 ### storageArea
 Type: `string`<br>
@@ -92,7 +126,7 @@ The name of `chrome.storage` area to be used, either `'sync'` or `'local'`.
 Type: `string`<br>
 Default: `'reduxed'`
 
-The key to be used for storing/tracking data in `chrome.storage`.
+Key under which the state will be stored/tracked in `chrome.storage`.
 
 ### bufferLife
 Type: `number`<br>

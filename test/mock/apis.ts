@@ -3,6 +3,7 @@ import {
   StorageGetKeys, StorageGetCallback, StorageListener,
   StorageAreaCallbacked, StorageAreaPromised, ChromeNamespace, BrowserNamespace
 } from '../../src/types/apis';
+import { cloneDeep }  from '../../src/utils';
 
 const pick = (obj: StorageData, keys: StorageGetKeys) => {
   if (typeof obj !== 'object')
@@ -38,8 +39,8 @@ class SharedStorageArea {
   _set(data: StorageData, callback?: () => void) {
     const changes = {};
     for (const key in data) {
-      const oldValue = storageData[key];
-      const newValue = storageData[key] = data[key];
+      const oldValue = cloneDeep(storageData[key]);
+      const newValue = storageData[key] = cloneDeep(data[key]);
       changes[key] = {newValue, oldValue};
     }
     Object.keys(changes).length &&

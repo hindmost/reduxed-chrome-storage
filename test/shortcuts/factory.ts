@@ -1,7 +1,7 @@
 import { createStore } from 'redux';
-import storeCreatorFactory from '../../src';
+import storeCreatorFactory, {ChangeListener} from '../../src';
 import {chrome} from '../mock/apis';
 
-export default function() {
-  return storeCreatorFactory({ createStore, chromeNs: chrome });
+export default function(changeListener?: ChangeListener) {
+  return storeCreatorFactory({ createStore, chromeNs: chrome, changeListener });
 }

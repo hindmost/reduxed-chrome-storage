@@ -6,6 +6,8 @@ import WrappedStorage from './WrappedStorage';
 import { cloneDeep, isEqual, mergeOrReplace } from './utils';
 import { ActionExtension, ExtendedStore } from './types/store';
 
+type ChangeListener = (oldState?: any) => void;
+
 export default class ReduxedStorage<
   W extends WrappedStorage<any>, A extends Action
 > {
@@ -13,11 +15,12 @@ export default class ReduxedStorage<
   storage: W;
   reducer: Reducer;
   enhancer?: StoreEnhancer;
+  state0: any;
   buffLife: number;
   buffStore: ExtendedStore | null;
   state: any;
   lastState: any;
-  listeners: (() => void)[];
+  listeners: ChangeListener[];
   inited: boolean;
 
   constructor({
@@ -35,7 +38,8 @@ export default class ReduxedStorage<
     this.reducer = reducer;
     this.enhancer = enhancer;
     this.buffLife = bufferLife? Math.min(Math.max(bufferLife, 0), 2000) : 100;
-    this.state = initialState;
+    this.state0 = initialState;
+    this.state = null;
     this.buffStore = null;
     this.lastState = null;
     this.listeners = [];
@@ -49,16 +53,14 @@ export default class ReduxedStorage<
       return new Promise(resolve => {
         resolve(this as ExtendedStore);
       });
-    const initialState = this.state;
-    this.state = null;
     const defaultState = this._createStore().getState();
     // subscribe for changes in chrome.storage
-    this.storage.subscribe(data => {
+    this.storage.subscribe((data, oldData) => {
       if (isEqual(data, this.state))
         return;
       this._setState(data);
       for (const fn of this.listeners) {
-        fn();
+        fn(oldData);
       }
     });
     this.inited = true;
@@ -68,8 +70,8 @@ export default class ReduxedStorage<
       this.storage.load(storedState => {
         let state = storedState?
           mergeOrReplace(defaultState, storedState) : defaultState;
-        if (initialState) {
-          state = mergeOrReplace(state, initialState);
+        if (this.state0) {
+          state = mergeOrReplace(state, this.state0);
         }
         this._setState(state);
         if (!isEqual(state, storedState)) {
@@ -77,6 +79,18 @@ export default class ReduxedStorage<
         }
         resolve(this as ExtendedStore);
       });
+    });
+  }
+
+  initFrom(state: any): ExtendedStore {
+    this._setState(state);
+    this.inited = true;
+    return this as ExtendedStore;
+  }
+
+  uninit(): Promise<ExtendedStore> {
+    return new Promise(resolve => {
+      resolve(this as ExtendedStore);
     });
   }
 
@@ -106,7 +120,7 @@ export default class ReduxedStorage<
     return this.state;
   }
 
-  subscribe(fn: () => void) {
+  subscribe(fn: ChangeListener) {
     typeof fn === 'function' && this.listeners.push(fn);
     return () => {
       if (typeof fn === 'function') {

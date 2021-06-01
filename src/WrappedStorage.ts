@@ -1,13 +1,13 @@
 import {
-  ApisNamespace, StorageAreaName, StorageData
+  ApisNamespace, StorageAreaName
 } from './types/apis';
 
 interface WrappedStorageListener {
-  (data: StorageData, area: StorageAreaName): void
+  (data: any, oldData?: any): void
 }
 
 export interface WrappedStorageLoadCallback {
-  (data: StorageData | null): void
+  (data?: any): void
 }
 
 export default abstract class WrappedStorage<N extends ApisNamespace> {
@@ -33,12 +33,12 @@ export default abstract class WrappedStorage<N extends ApisNamespace> {
     this.ns.storage.onChanged.addListener((changes, area) => {
       if (area !== this.areaName || !(this.key in changes))
         return;
-      const {newValue} = changes[this.key];
+      const {newValue, oldValue} = changes[this.key];
       if (!newValue)
         return;
       // call external chrome.storage.onChanged listeners
       for (const fn of this.listeners) {
-        fn(newValue, this.areaName);
+        fn(newValue, oldValue);
       }
     });
   }
