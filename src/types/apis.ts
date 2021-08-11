@@ -26,18 +26,27 @@ export interface StorageData {
 
 export type StorageGetCallback = (data: StorageData) => void;
 export type StorageGetKeys = string | string[] | StorageData | null;
+export type StorageUsageCallback = (data: number) => void;
+export type StorageUsageKeys = string | string[] | null;
 
-export interface StorageAreaCallbacked {
+export interface StorageAreaQuotas {
+  QUOTA_BYTES: number;
+  QUOTA_BYTES_PER_ITEM?: number;
+}
+
+export interface StorageAreaCallbacked extends StorageAreaQuotas {
   get(callback: StorageGetCallback): void;
   get(keys: StorageGetKeys, callback: StorageGetCallback): void;
   set(data: StorageData, callback?: () => void): void;
   clear(): void;
+  getBytesInUse(keys: StorageUsageKeys, callback: StorageUsageCallback): void;
 }
 
-export interface StorageAreaPromised {
+export interface StorageAreaPromised extends StorageAreaQuotas {
   get(keys?: StorageGetKeys): Promise<StorageData>;
   set(data: StorageData): Promise<void>;
   clear(): void;
+  getBytesInUse(keys: StorageUsageKeys): Promise<number>;
 }
 
 export interface ApisNamespace {

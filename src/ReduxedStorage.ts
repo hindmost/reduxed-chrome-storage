@@ -95,19 +95,11 @@ export default class ReduxedStorage<
   }
 
   _createStore(initialState?: any) {
-    try {
-      return this.createStore( this.reducer, initialState, this.enhancer );
-    } catch (err) {
-      throw new Error('createStore() call failed');
-    }
+    return this.createStore( this.reducer, initialState, this.enhancer );
   }
 
   _send2Storage(data: any) {
-    try {
-      this.storage.save(data);
-    } catch (err) {
-      throw new Error('Browser storage limit exceeded');
-    }
+    this.storage.save(data);
   }
 
   _setState(data: any) {

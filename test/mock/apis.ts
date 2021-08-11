@@ -1,6 +1,7 @@
 import {
   StorageAreaName, StorageData,
   StorageGetKeys, StorageGetCallback, StorageListener,
+  StorageUsageKeys, StorageUsageCallback,
   StorageAreaCallbacked, StorageAreaPromised, ChromeNamespace, BrowserNamespace
 } from '../../src/types/apis';
 import { cloneDeep }  from '../../src/utils';
@@ -22,6 +23,7 @@ let storageData: StorageData = {};
 let listeners: StorageListener[] = [];
 
 class SharedStorageArea {
+  QUOTA_BYTES = 0;
   name: StorageAreaName;
 
   constructor(name: string) {
@@ -51,6 +53,11 @@ class SharedStorageArea {
       typeof callback === 'function' && callback();
     }, 0);
   }
+  _getUsage(keys: StorageUsageKeys) {
+    return JSON.stringify(
+      typeof keys !== 'undefined'? pick(storageData, keys) : storageData
+    ).length;
+  }
   clear() {
     storageData = {};
     listeners = [];
@@ -69,7 +76,9 @@ class ChromeStorageArea extends SharedStorageArea {
   set(data: StorageData, callback?: () => void) {
     this._set(data, callback);
   }
-
+  getBytesInUse(keys: StorageUsageKeys, callback: StorageUsageCallback) {
+    callback(this._getUsage(keys));
+  }
 }
 
 class BrowserStorageArea extends SharedStorageArea {
@@ -85,6 +94,11 @@ class BrowserStorageArea extends SharedStorageArea {
       this._set(data, () => {
         resolve();
       });
+    });
+  }
+  getBytesInUse(keys: StorageUsageKeys) {
+    return new Promise(resolve => {
+      resolve(this._getUsage(keys));
     });
   }
 

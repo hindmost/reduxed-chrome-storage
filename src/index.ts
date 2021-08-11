@@ -3,9 +3,8 @@ import WrappedChromeStorage from './WrappedChromeStorage';
 import WrappedBrowserStorage from './WrappedBrowserStorage';
 import { StoreCreator, StoreEnhancer, Reducer } from 'redux';
 import { ExtendedStore } from './types/store';
-import {
-  ChromeNamespace, BrowserNamespace
-} from './types/apis';
+import { ChromeNamespace, BrowserNamespace } from './types/apis';
+import { ChangeListener, ErrorListener } from './types/listeners';
 
 enum Namespace {
   chrome = 'chrome',
@@ -14,11 +13,8 @@ enum Namespace {
 declare const chrome: ChromeNamespace;
 declare const browser: BrowserNamespace;
 
-export {
-  ChromeNamespace, BrowserNamespace
-} from './types/apis';
-
-export type ChangeListener = (store: ExtendedStore, oldState?: any) => void;
+export { ChromeNamespace, BrowserNamespace } from './types/apis';
+export { ChangeListener, ErrorListener } from './types/listeners';
 
 /**
  * ReduxedChromeStorage creator factory.
@@ -43,14 +39,20 @@ export type ChangeListener = (store: ExtendedStore, oldState?: any) => void;
  * If this option is supplied, the previous two are ignored
  * @param obj.changeListener a function to be called whenever the state changes,
  * receives two parameters:
- * a one-time store-container of the current state and the previous state.
+ * 1) a one-time store - container of the current state;
+ * 2) the previous state.
  * This option only makes sense in Manifest V3 service workers
  * or event-driven background scripts.
  * If this option is supplied, the async store creator returned by the factory
- * is to only be used for holding the arguments to be passed to
- * the original createStore upon a one-time store creation
+ * is not supposed to be immediately used for store creation;
+ * its only purpose in this case is to hold the arguments to be passed
+ * to the original `createStore` upon a one-time store creation
+ * @param obj.errorListener a function to be called whenever an error occurs
+ * during chrome.storage update, receives two parameters:
+ * 1) an error message defined by storage API;
+ * 2) a boolean indicating if the limit for the used storage area is exceeded
  * @param obj.storageArea the name of chrome.storage area to be used,
- * defaults to 'sync'
+ * either 'local' or 'sync', defaults to 'local'
  * @param obj.storageKey key under which the state will be stored/tracked
  * in chrome.storage, defaults to 'reduxed'
  * @param obj.bufferLife lifetime of the bulk actions buffer (in ms),
@@ -61,6 +63,7 @@ export default function reduxedStorageCreatorFactory({
   createStore,
   namespace, chromeNs, browserNs,
   changeListener,
+  errorListener,
   storageArea, storageKey, bufferLife
 }: {
   createStore: StoreCreator,
@@ -68,6 +71,7 @@ export default function reduxedStorageCreatorFactory({
   chromeNs?: ChromeNamespace,
   browserNs?: BrowserNamespace,
   changeListener?: ChangeListener,
+  errorListener?: ErrorListener,
   storageArea?: string,
   storageKey?: string,
   bufferLife?: number
@@ -83,6 +87,8 @@ export default function reduxedStorageCreatorFactory({
       namespace: chromeNs || chrome, area: storageArea, key: storageKey
     });
   storage.init();
+  typeof errorListener === 'function' &&
+  storage.subscribeForError(errorListener);
 
   function asyncStoreCreator(
     reducer: Reducer,
@@ -116,7 +122,7 @@ export default function reduxedStorageCreatorFactory({
       changeListener(store.initFrom(data), oldData);
     });
     return store.uninit();
-}
+  }
 
   return asyncStoreCreator;
 }

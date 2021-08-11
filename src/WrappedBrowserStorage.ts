@@ -1,7 +1,7 @@
 import {
   BrowserNamespace, StorageAreaPromised
 } from './types/apis';
-import WrappedStorage, {WrappedStorageLoadCallback} from './WrappedStorage';
+import WrappedStorage, { LoadCallback } from './WrappedStorage';
 
 export default class WrappedBrowserStorage extends WrappedStorage<BrowserNamespace> {
   areaApi: StorageAreaPromised;
@@ -15,19 +15,21 @@ export default class WrappedBrowserStorage extends WrappedStorage<BrowserNamespa
     this.areaApi = this.ns.storage[this.areaName];
   }
 
-  load(fn: WrappedStorageLoadCallback) {
+  load(fn: LoadCallback) {
     typeof fn === 'function' &&
-    this.areaApi.get(this.key)
-    .then(data => {
-      fn(!this.ns.runtime.lastError && data && data[this.key]);
+    this.areaApi.get( this.key ).then( data => {
+      this.callbackOnLoad(data, fn);
     });
   }
 
   save(data: any) {
-    this.areaApi.set({[this.key]: data})
-    .then(() => {
-      if (this.ns.runtime.lastError)
-        throw new Error();
+    this.areaApi.set( {[this.key]: data} ).then( () => {
+      const message = this.getErrorMessage();
+      typeof message !== 'undefined' &&
+      !this.checkQuotaPerItem(message, this.areaApi, data) &&
+      this.areaApi.getBytesInUse(null).then( total => {
+        this.checkQuota(message, this.areaApi, data, total);
+      });
     });
   }
 }

@@ -114,13 +114,21 @@ A function to be called whenever the state changes, receives two parameters:
 1. one-time store - container of the current state;
 2. the previous state.
 
-This option only makes sense in Manifest V3 service workers or event-driven background scripts. If this option is supplied, the async store creator returned by the factory is to only be used for holding the arguments to be passed to the original `createStore` upon a one-time store creation.
+This option only makes sense in Manifest V3 service workers or event-driven background scripts. However it works in the same way in persistent scripts too, which may be useful for cross-browser development. Note: if this option is supplied, the async store creator returned by the factory is not supposed to be immediately used for store creation; its only purpose in this case is to hold the arguments to be passed to the original `createStore` upon a one-time store creation.
+
+### errorListener
+Type: `function` (`ErrorListener` in Typescript definition)<br>
+
+A function to be called whenever an error occurs during `chrome.storage` update, receives two parameters:
+
+1. an error message defined by storage API;
+2. a boolean indicating if the limit for the used storage area is exceeded.
 
 ### storageArea
 Type: `string`<br>
-Default: `'sync'`
+Default: `'local'`
 
-The name of `chrome.storage` area to be used, either `'sync'` or `'local'`.
+The name of `chrome.storage` area to be used, either `'sync'` or `'local'`. Note: it is not recommended to use `sync` area for immediately storing the state of extension. Use `local` area instead - it has less strict limits than `sync`. If you need to sync the state (entirely or partially) to a user's account, create a temporary store of `sync` area, then copy the needed data to (or from) the main store (of `local` area).
 
 ### storageKey
 Type: `string`<br>
