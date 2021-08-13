@@ -25,6 +25,7 @@ const options = {
   namespace?: ...,
   chromeNs?: ...,
   browserNs?: ...,
+  errorListener?: ...,
   storageArea?: ...,
   storageKey?: ...,
   bufferLife?: ...
@@ -59,6 +60,29 @@ async () => {
 ...
 ```
 
+### Storage API errors listening along with size/limits control:
+
+```js
+import { createStore } from 'redux';
+import storeCreatorFactory from 'reduxed-chrome-storage';
+import reducer from './reducer';
+
+const errorListener = (message: string, exceeded: boolean) => {
+  ...
+};
+const options = {
+  createStore: createStore,
+  errorListener: errorListener,
+  namespace?: ...,
+  chromeNs?: ...,
+  browserNs?: ...,
+  storageArea?: ...,
+  storageKey?: ...,
+  bufferLife?: ...
+};
+storeCreatorFactory(options)(reducer);
+```
+
 ### State change listening (special case - only makes sense in Manifest V3 service workers):
 
 ```js
@@ -76,6 +100,7 @@ const options = {
   namespace?: ...,
   chromeNs?: ...,
   browserNs?: ...,
+  errorListener?: ...,
   storageArea?: ...,
   storageKey?: ...,
   bufferLife?: ...

@@ -24,12 +24,7 @@ export default class WrappedBrowserStorage extends WrappedStorage<BrowserNamespa
 
   save(data: any) {
     this.areaApi.set( {[this.key]: data} ).then( () => {
-      const message = this.getErrorMessage();
-      typeof message !== 'undefined' &&
-      !this.checkQuotaPerItem(message, this.areaApi, data) &&
-      this.areaApi.getBytesInUse(null).then( total => {
-        this.checkQuota(message, this.areaApi, data, total);
-      });
+      this.callbackOnSave(data, this.areaApi);
     });
   }
 }

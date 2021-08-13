@@ -34,19 +34,13 @@ export { ChangeListener, ErrorListener } from './types/listeners';
  * If this option is supplied, the previous one is ignored
  * @param obj.browserNs the browser namespace within Firefox extension,
  * or the chrome namespace within Manifest V3 chrome extension.
- * One may pass the chrome namespace within Manifest V3 to make this library
- * use Promise-based APIs under the hood.
  * If this option is supplied, the previous two are ignored
  * @param obj.changeListener a function to be called whenever the state changes,
  * receives two parameters:
  * 1) a one-time store - container of the current state;
  * 2) the previous state.
- * This option only makes sense in Manifest V3 service workers
- * or event-driven background scripts.
  * If this option is supplied, the async store creator returned by the factory
- * is not supposed to be immediately used for store creation;
- * its only purpose in this case is to hold the arguments to be passed
- * to the original `createStore` upon a one-time store creation
+ * is not supposed to be immediately used for store creation
  * @param obj.errorListener a function to be called whenever an error occurs
  * during chrome.storage update, receives two parameters:
  * 1) an error message defined by storage API;

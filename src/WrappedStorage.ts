@@ -1,17 +1,22 @@
 import {
-  ApisNamespace, StorageAreaName, StorageAreaQuotas
+  ApisNamespace, StorageAreaName, StorageAreaQuotas, StorageData
 } from './types/apis';
 import { ErrorListener } from './types/listeners';
 
 type Listener = (data: any, oldData?: any) => void;
 export type LoadCallback = (data?: any) => void;
 
+const usageSize = (data: StorageData) => 
+  new TextEncoder().encode( 
+    Object.entries(data).map( ([key, val]) =>
+      key + JSON.stringify(val)
+    ).join('')
+  ).length;
+
 export default abstract class WrappedStorage<N extends ApisNamespace> {
   ns: N;
   areaName: StorageAreaName;
   key: string;
-  keyLen: number;
-  lastSize: number;
   listeners: Listener[];
   errorListeners: ErrorListener[];
 
@@ -24,8 +29,6 @@ export default abstract class WrappedStorage<N extends ApisNamespace> {
     this.areaName = area === StorageAreaName.sync? StorageAreaName.sync :
       StorageAreaName.local;
     this.key = key || 'reduxed';
-    this.keyLen = this.key.length;
-    this.lastSize = 0;
     this.listeners = [];
     this.errorListeners = [];
   }
@@ -38,7 +41,6 @@ export default abstract class WrappedStorage<N extends ApisNamespace> {
       const {newValue, oldValue} = changes[this.key];
       if (!newValue)
         return;
-      this.lastSize = JSON.stringify(newValue).length;
       // call external chrome.storage.onChanged listeners
       for (const fn of this.listeners) {
         fn(newValue, oldValue);
@@ -54,43 +56,42 @@ export default abstract class WrappedStorage<N extends ApisNamespace> {
     typeof fn === 'function' && this.errorListeners.push(fn);
   }
 
-  fireErrorListeners(message: string, exceeded?: boolean) {
+  fireErrorListeners(message: string, exceeded: boolean) {
     for (const fn of this.errorListeners) {
       fn(message, exceeded);
     }
   }
 
-  getErrorMessage() {
+  callbackOnLoad(data: any, callback: LoadCallback, all?: boolean) {
+    callback(
+      !this.ns.runtime.lastError && (all? data : data && data[this.key])
+    );
+  }
+
+  callbackOnSave(data: any, area: StorageAreaQuotas) {
     if (!this.ns.runtime.lastError)
       return;
     const {message} = this.ns.runtime.lastError;
-    return message || '';
-  }
-
-  callbackOnLoad(data: any, callback: LoadCallback) {
-    data = !this.ns.runtime.lastError && data && data[this.key];
-    if (!this.lastSize && data) {
-      this.lastSize = JSON.stringify(data).length;
+    if (!message || !data || !area) {
+      this.fireErrorListeners(message || '', false);
+      return;
     }
-    callback(data);
-  }
-
-  checkQuotaPerItem(msg: string, area: StorageAreaQuotas, data: any) {
     const b = this.areaName === StorageAreaName.sync &&
-      area && area.QUOTA_BYTES_PER_ITEM && data &&
-      JSON.stringify(data).length + this.keyLen > area.QUOTA_BYTES_PER_ITEM;
-    b && this.fireErrorListeners(msg);
-    return b;
+      area.QUOTA_BYTES_PER_ITEM &&
+      usageSize({ [this.key]: data }) > area.QUOTA_BYTES_PER_ITEM;
+    if (b) {
+      this.fireErrorListeners(message, true);
+      return;
+    }
+    this.load((allData?: any) => {
+      const b = typeof allData === 'object' &&
+        area.QUOTA_BYTES > 0 &&
+        usageSize({ ...allData, [this.key]: data }) > area.QUOTA_BYTES;
+      this.fireErrorListeners(message, b);
+    }, true);
   }
 
-  checkQuota(msg: string, area: StorageAreaQuotas, data: any, total: number) {
-    const b = !this.ns.runtime.lastError &&
-      area && area.QUOTA_BYTES && data && total > 0 && this.lastSize > 0 &&
-      JSON.stringify(data).length - this.lastSize > area.QUOTA_BYTES - total;
-    this.fireErrorListeners(msg, b);
-  }
-
-  abstract load(fn: LoadCallback): void;
+  abstract load(fn: LoadCallback, all?: boolean): void;
 
   abstract save(data: any): void;
 }

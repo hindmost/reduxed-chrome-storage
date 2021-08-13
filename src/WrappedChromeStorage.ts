@@ -15,21 +15,16 @@ export default class WrappedChromeStorage extends WrappedStorage<ChromeNamespace
     this.areaApi = this.ns.storage[this.areaName];
   }
 
-  load(fn: LoadCallback) {
+  load(fn: LoadCallback, all?: boolean) {
     typeof fn === 'function' &&
-    this.areaApi.get( this.key , data => {
-      this.callbackOnLoad(data, fn);
+    this.areaApi.get( all? null : this.key , data => {
+      this.callbackOnLoad(data, fn, all);
     });
   }
 
   save(data: any) {
     this.areaApi.set( {[this.key]: data} , () => {
-      const message = this.getErrorMessage();
-      typeof message !== 'undefined' &&
-      !this.checkQuotaPerItem(message, this.areaApi, data) &&
-      this.areaApi.getBytesInUse(null, total => {
-        this.checkQuota(message, this.areaApi, data, total);
-      })
+      this.callbackOnSave(data, this.areaApi);
     });
   }
 }
