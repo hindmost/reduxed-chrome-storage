@@ -15,9 +15,9 @@ export default class WrappedBrowserStorage extends WrappedStorage<BrowserNamespa
     this.areaApi = this.ns.storage[this.areaName];
   }
 
-  load(fn: LoadCallback) {
+  load(fn: LoadCallback, all?: boolean) {
     typeof fn === 'function' &&
-    this.areaApi.get( this.key ).then( data => {
+    this.areaApi.get( all? null : this.key ).then( data => {
       this.callbackOnLoad(data, fn);
     });
   }
