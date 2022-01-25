@@ -11,7 +11,8 @@ export function cloneDeep(o: any): any {
 export function isEqual(a: any, b: any): boolean {
   if (a === b)
     return true;
-  if (a == null || typeof a !== 'object' || b == null || typeof b !== 'object')
+  if (a == null || typeof a !== 'object' ||
+      b == null || typeof b !== 'object')
     return false;
   const keysA = Object.keys(a), keysB = Object.keys(b);
   if (keysA.length !== keysB.length)
@@ -26,10 +27,11 @@ export function isEqual(a: any, b: any): boolean {
 export function mergeOrReplace(a: any, b: any): any {
   if (Array.isArray(b))
     return cloneDeep(b);
-  if (typeof a !== 'object' || Array.isArray(a) || typeof b !== 'object')
+  if (a == null || typeof a !== 'object' || Array.isArray(a) ||
+      b == null || typeof b !== 'object')
     return typeof b !== 'undefined'? b : a;
   return Object.keys(a).concat(
-      Object.keys(b).filter(key => !a[key])
+      Object.keys(b).filter(key => !(key in a))
     ).reduce((acc: any, key) => {
       return acc[key] = mergeOrReplace(a[key], b[key]), acc
     }, {});
