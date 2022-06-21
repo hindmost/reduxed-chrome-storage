@@ -1,18 +1,15 @@
 export function cloneDeep(o: any): any {
-  if (o == null || typeof o !== 'object')
-    return o;
-  if (Array.isArray(o))
-    return o.map(v => cloneDeep(v));
-  return Object.keys(o).reduce((acc: any, key) => {
-    return acc[key] = cloneDeep(o[key]), acc
-    }, {});
+  return o == null || typeof o !== 'object' ?
+    o :
+    JSON.parse(JSON.stringify(o));
 }
 
 export function isEqual(a: any, b: any): boolean {
   if (a === b)
     return true;
   if (a == null || typeof a !== 'object' ||
-      b == null || typeof b !== 'object')
+      b == null || typeof b !== 'object' ||
+      Array.isArray(a) !== Array.isArray(b) )
     return false;
   const keysA = Object.keys(a), keysB = Object.keys(b);
   if (keysA.length !== keysB.length)
