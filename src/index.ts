@@ -106,16 +106,20 @@ export default function reduxedStorageCreatorFactory({
       enhancer = initialState as StoreEnhancer
       initialState = undefined
     }
-    const store = new ReduxedStorage({
-      createStore, storage, bufferLife,
-      reducer, initialState, enhancer
-    });
-    if (typeof changeListener !== 'function')
-      return store.init();
-    storage.subscribe((data, oldData) => {
-      changeListener(store.initFrom(data), oldData);
-    });
-    return store.uninit();
+    const opts = {
+      createStore, storage, bufferLife, reducer, initialState, enhancer
+    };
+    if (typeof changeListener === 'function') {
+      storage.subscribe((data, oldData) => {
+        const store = new ReduxedStorage(opts);
+        changeListener(store.initFrom(data), oldData);
+      });
+      return new Promise( resolve => {
+        resolve( createStore( state => state) as ExtendedStore );
+      });
+    }
+    const store = new ReduxedStorage(opts);
+    return store.init();
   }
 
   return asyncStoreCreator;

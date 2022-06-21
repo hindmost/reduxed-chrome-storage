@@ -88,12 +88,6 @@ export default class ReduxedStorage<
     return this as ExtendedStore;
   }
 
-  uninit(): Promise<ExtendedStore> {
-    return new Promise(resolve => {
-      resolve(this as ExtendedStore);
-    });
-  }
-
   _createStore(initialState?: any) {
     return this.createStore( this.reducer, initialState, this.enhancer );
   }
