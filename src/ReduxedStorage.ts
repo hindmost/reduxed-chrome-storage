@@ -44,8 +44,11 @@ export default class ReduxedStorage<
     this.lastState = null;
     this.listeners = [];
     this.inited = false;
+    this.getState = this.getState.bind(this);
     this.dispatch = this.dispatch.bind(this);
     this.subscribe = this.subscribe.bind(this);
+    this[Symbol.observable] = this[Symbol.observable].bind(this);
+    this.replaceReducer = this.replaceReducer.bind(this); 
   }
 
   init(): Promise<ExtendedStore> {

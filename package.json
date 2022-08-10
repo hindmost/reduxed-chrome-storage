@@ -1,7 +1,7 @@
 {
   "name": "reduxed-chrome-storage",
-  "version": "2.5.0",
-  "description": "Redux-compatible interface to chrome.storage. Unified way to use Redux in all modern browser extensions. The only way to get Redux working in Manifest V3 Chrome extensions",
+  "version": "2.6.0",
+  "description": "Redux interface to chrome.storage. Unified way to use Redux in all modern browser extensions. The only way to get Redux working in Manifest V3 Chrome extensions",
   "license": "MIT",
   "author": "Savr Goryaev",
   "repository": "github:hindmost/reduxed-chrome-storage",
