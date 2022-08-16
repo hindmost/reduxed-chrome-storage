@@ -143,10 +143,11 @@ export default class ReduxedStorage<
       // send the current state to chrome.storage & update this.lastState
       this._send2Storage(state);
       this.lastState = state;
-      // as we already catched the 1st effective state change, we don't need this listener and lastStore anymore,
-      // so we unsubscribe the former and reset the latter in order to release the related resources
-      unsubscribe();
-      lastStore = null;
+      // unsubscribe this listener and reset the lastStore in order to release the related resources
+      setTimeout(() => {
+        unsubscribe();
+        lastStore = null;
+      }, this.buffLife);
     });
     return lastStore.dispatch(action);
   }

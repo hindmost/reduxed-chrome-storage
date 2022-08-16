@@ -4,7 +4,7 @@ import { applyMiddleware } from 'redux';
 import thunk from 'redux-thunk';
 import reset from './shortcuts/reset';
 import storeCreatorFactory from './shortcuts/factory';
-import { delayAddTodo, delayToggleTodo } from './samples/todos/actions';
+import { delayAddTodo, delayToggleTodo, batchAddTodos } from './samples/todos/actions';
 import todosReducer from './samples/todos/reducers';
 
 describe("Async actions", () => {
@@ -58,4 +58,23 @@ describe("Async actions", () => {
 
   });
 
+  describe("causing multiple state changes", () => {
+
+    it("create a store with TodoList reducer and Redux Thunk as a middleware; dispatch an async action that causes multiple state changes", async () => {
+      const store = await storeCreatorFactory()( todosReducer, applyMiddleware(thunk) );
+      const clock = sinon.useFakeTimers();
+      expect(store.getState()).to.eql([]);
+      store.dispatch(batchAddTodos(["todo1", "todo2", "todo3", "todo4"]));
+      clock.tick(1);
+      expect(store.getState()).to.eql([
+        { id: 1, text: "todo1", completed: false },
+        { id: 2, text: "todo2", completed: false },
+        { id: 3, text: "todo3", completed: false },
+        { id: 4, text: "todo4", completed: false },
+      ]);
+      clock.restore();
+    });
+  
+  });
+  
 });

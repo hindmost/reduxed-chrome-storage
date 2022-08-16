@@ -21,3 +21,9 @@ export const delayToggleTodo = (id:number, delay?:number) => (dispatch: Dispatch
     dispatch(toggleTodo(id));
   }, delay || 1000);
 }
+
+export const batchAddTodos = (todos: string[]) => (dispatch: Dispatch) => {
+  todos.forEach((todo) => {
+    dispatch(addTodo(todo));
+  });
+};
