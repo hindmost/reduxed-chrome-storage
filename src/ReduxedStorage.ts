@@ -88,7 +88,7 @@ export default class ReduxedStorage<
     // is restored from chrome.storage
     return new Promise( resolve => {
       this.storage.load( data => {
-        const [storedState, id, timestamp] = unpackState(data);
+        const [storedState, , timestamp] = unpackState(data);
         let newState = storedState?
           mergeOrReplace(defaultState, storedState) : defaultState;
         if (this.resetState) {
@@ -119,8 +119,11 @@ export default class ReduxedStorage<
   _renewStore() {
     this.plain? this.unsub && this.unsub() : this._clean();
     const store = this.store = this._instantiateStore(this.state);
-    const timestamp = Date.now();
-    this.outdted.map( ([t, u]) => t ? [t, u] : [timestamp, u] );
+    const now = Date.now();
+    const n = this.outdted.length;
+    this.outdted = this.outdted.map( ([t, u], i) =>
+      t || i >= n-1 ? [t, u] : [now, u]
+    );
     let state0 = cloneDeep(this.state);
     const unsubscribe = this.store.subscribe( () => {
       const state = store && store.getState();
@@ -151,9 +154,9 @@ export default class ReduxedStorage<
     if (this.plain)
       return;
     const now = Date.now();
-    const nOld = this.outdted.length;
+    const n = this.outdted.length;
     this.outdted.forEach( ([timestamp, unsubscribe], i) => {
-      if (i >= nOld-1 || now - timestamp < this.timeout)
+      if (i >= n-1 || now - timestamp < this.timeout)
         return;
       unsubscribe();
       delete this.outdted[i];
