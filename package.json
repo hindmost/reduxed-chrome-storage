@@ -1,6 +1,6 @@
 {
   "name": "reduxed-chrome-storage",
-  "version": "3.0.0",
+  "version": "3.0.5",
   "description": "Redux interface to chrome.storage (browser.storage). A unified way to use Redux in all modern browser extensions. The only way to get Redux working in Manifest V3 Chrome extensions",
   "license": "MIT",
   "author": "Savr Goryaev aka hindmost",
