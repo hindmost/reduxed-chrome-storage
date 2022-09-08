@@ -1,9 +1,9 @@
 {
   "name": "reduxed-chrome-storage",
-  "version": "2.7.0",
-  "description": "Redux interface to chrome.storage. Unified way to use Redux in all modern browser extensions. The only way to get Redux working in Manifest V3 Chrome extensions",
+  "version": "3.0.0",
+  "description": "Redux interface to chrome.storage (browser.storage). A unified way to use Redux in all modern browser extensions. The only way to get Redux working in Manifest V3 Chrome extensions",
   "license": "MIT",
-  "author": "Savr Goryaev",
+  "author": "Savr Goryaev aka hindmost",
   "repository": "github:hindmost/reduxed-chrome-storage",
   "bugs": "https://github.com/hindmost/reduxed-chrome-storage/issues",
   "keywords": [
@@ -25,32 +25,36 @@
   "files": [
     "dist"
   ],
+  "dependencies": {
+    "uuid": "^8.3"
+  },
   "peerDependencies": {
     "redux": "^4"
   },
   "devDependencies": {
-    "chai": "^4",
-    "eslint": "^7",
-    "eslint-import-resolver-typescript": "^2.4",
-    "eslint-plugin-import": "^2.24",
-    "mocha": "^8",
-    "redux": "^4",
-    "redux-thunk": "^2",
-    "rollup": "^2.56",
+    "chai": "^4.3",
+    "eslint": "^8.23",
+    "eslint-import-resolver-typescript": "^3.5",
+    "eslint-plugin-import": "^2.26",
+    "mocha": "^10.0",
+    "@reduxjs/toolkit": "1.8",
+    "rollup": "^2.79",
     "@rollup/plugin-buble": "^0.21",
-    "rollup-plugin-delete": "^2",
-    "rollup-plugin-license": "^2.5",
-    "rollup-plugin-terser": "^7",
-    "rollup-plugin-typescript2": "^0.30",
-    "sinon": "^9",
-    "ts-mocha": "^8",
-    "typescript": "^4.3",
-    "@types/chai": "^4",
-    "@types/mocha": "^8",
-    "@types/node": "^16.4",
-    "@types/sinon": "^9",
-    "@typescript-eslint/eslint-plugin": "^4.29",
-    "@typescript-eslint/parser": "^4.29"
+    "rollup-plugin-delete": "^2.0",
+    "rollup-plugin-license": "^2.8",
+    "@rollup/plugin-node-resolve": "13.3",
+    "rollup-plugin-terser": "^7.0",
+    "rollup-plugin-typescript2": "^0.33",
+    "sinon": "^14.0",
+    "ts-mocha": "^10.0",
+    "typescript": "^4.8",
+    "@types/chai": "^4.3",
+    "@types/mocha": "^9.1",
+    "@types/node": "^18.7",
+    "@types/sinon": "^10.0",
+    "@types/uuid": "^8.3",
+    "@typescript-eslint/eslint-plugin": "^5.36",
+    "@typescript-eslint/parser": "^5.36"
   },
   "scripts": {
     "prebuild": "npm run lint",

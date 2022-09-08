@@ -1,107 +1,180 @@
 import {
-  StoreCreator, StoreEnhancer, Action, Reducer,
+  Action, Reducer,
   Observer, Observable, Unsubscribe
 } from 'redux';
+import { v4 as uuid } from 'uuid';
 import WrappedStorage from './WrappedStorage';
-import { cloneDeep, isEqual, mergeOrReplace } from './utils';
-import { ActionExtension, ExtendedStore } from './types/store';
+import { cloneDeep, isEqual, diffDeep, mergeOrReplace } from './utils';
+import { ChangeListener } from './types/listeners';
+import {
+  ActionExtension, ExtendedStore, StoreCreatorContainer
+} from './types/store';
 
-type ChangeListener = (oldState?: any) => void;
+type StandardListener = () => void;
+
+const packState = (state: any, id: string, ts: number): [string, number, any] =>
+  [id, ts, state];
+
+export const unpackState = (data: any): [any, string, number] => {
+  if (typeof data === 'undefined' || !Array.isArray(data) || data.length !== 3)
+    return [data, '', 0];
+  const [ id, ts, state ] = data;
+  return typeof id === 'string' && typeof ts === 'number' ?
+    [ state, id, ts ] :
+    [data, '', 0];
+}
 
 export default class ReduxedStorage<
   W extends WrappedStorage<any>, A extends Action
 > {
-  createStore: StoreCreator;
+  container: StoreCreatorContainer;
   storage: W;
-  reducer: Reducer;
-  enhancer?: StoreEnhancer;
-  state0: any;
-  buffLife: number;
-  buffStore: ExtendedStore | null;
+  isolated?: boolean;
+  plain?: boolean;
+  timeout: number;
+  resetState: any;
+  store: ExtendedStore;
   state: any;
-  lastState: any;
-  listeners: ChangeListener[];
-  inited: boolean;
+  id: string;
+  tmstamp: number;
+  lisner?: ChangeListener;
+  lisners: StandardListener[];
+  unsub?: Unsubscribe;
+  outdted: [number, Unsubscribe][];
 
-  constructor({
-    createStore, reducer, storage, bufferLife, initialState, enhancer
-  }: {
-    createStore: StoreCreator,
-    reducer: Reducer,
-    storage: W,
-    bufferLife?: number,
-    initialState?: any,
-    enhancer?: StoreEnhancer
-  }) {
-    this.createStore = createStore;
+  constructor(
+    container: StoreCreatorContainer, storage: W,
+    isolated?: boolean, plainActions?: boolean, outdatedTimeout?: number,
+    localChangeListener?: ChangeListener, resetState?: any
+  ) {
+    this.container = container;
     this.storage = storage;
-    this.reducer = reducer;
-    this.enhancer = enhancer;
-    this.buffLife = bufferLife? Math.min(Math.max(bufferLife, 0), 2000) : 100;
-    this.state0 = initialState;
+    this.isolated = isolated;
+    this.plain = plainActions;
+    this.timeout = outdatedTimeout? Math.max(outdatedTimeout, 500) : 1000;
+    this.resetState = resetState;
+    this.store = this._instantiateStore();
     this.state = null;
-    this.buffStore = null;
-    this.lastState = null;
-    this.listeners = [];
-    this.inited = false;
+    this.id = uuid();
+    this.tmstamp = 0;
+    this.outdted = [];
+    if (typeof localChangeListener === 'function')
+      this.lisner = localChangeListener;
+    this.lisners = [];
     this.getState = this.getState.bind(this);
-    this.dispatch = this.dispatch.bind(this);
     this.subscribe = this.subscribe.bind(this);
+    this.dispatch = this.dispatch.bind(this);
+    this.replaceReducer = this.replaceReducer.bind(this);
     this[Symbol.observable] = this[Symbol.observable].bind(this);
-    this.replaceReducer = this.replaceReducer.bind(this); 
   }
 
   init(): Promise<ExtendedStore> {
-    if (this.inited)
-      return new Promise(resolve => {
-        resolve(this as ExtendedStore);
-      });
-    const defaultState = this._createStore().getState();
-    // subscribe for changes in chrome.storage
-    this.storage.subscribe((data, oldData) => {
-      if (isEqual(data, this.state))
+    this.tmstamp || this.isolated ||
+    this.storage.subscribe( (data, oldData) => {
+      const [ state, id, timestamp ] = unpackState(data);
+      if (id === this.id || isEqual(state, this.state))
         return;
-      this._setState(data);
-      for (const fn of this.listeners) {
-        fn(oldData);
-      }
+      const newTime = timestamp >= this.tmstamp;
+      const newState = newTime?
+        mergeOrReplace(this.state, state) : mergeOrReplace(state, this.state);
+      !newTime && isEqual(newState, this.state) ||
+        ( this._setState(newState, timestamp), this._renewStore() );
+      newTime && isEqual(newState, state) ||
+        this._send2Storage();
+      this._callListeners();
     });
-    this.inited = true;
-    // return a promise to be resolved when the last state (if any) is restored from chrome.storage
-    return new Promise(resolve => {
-      // try to restore the last state stored in chrome.storage, if any
-      this.storage.load(storedState => {
-        let state = storedState?
+    const defaultState = this.store.getState();
+    // return a promise to be resolved when the last state (if any)
+    // is restored from chrome.storage
+    return new Promise( resolve => {
+      this.storage.load( data => {
+        const [storedState, id, timestamp] = unpackState(data);
+        let newState = storedState?
           mergeOrReplace(defaultState, storedState) : defaultState;
-        if (this.state0) {
-          state = mergeOrReplace(state, this.state0);
+        if (this.resetState) {
+          newState = mergeOrReplace(newState, this.resetState);
         }
-        this._setState(state);
-        if (!isEqual(state, storedState)) {
-          this._send2Storage(state);
-        }
+        this._setState(newState, timestamp);
+        this._renewStore();
+        isEqual(newState, storedState) || this._send2Storage();
         resolve(this as ExtendedStore);
       });
     });
   }
 
   initFrom(state: any): ExtendedStore {
-    this._setState(state);
-    this.inited = true;
+    this._setState(state, 0);
+    this._renewStore();
     return this as ExtendedStore;
   }
 
-  _createStore(initialState?: any) {
-    return this.createStore( this.reducer, initialState, this.enhancer );
+  _setState(data: any, timestamp?: number) {
+    this.state = cloneDeep(data);
+    timestamp = typeof timestamp !== 'undefined'? timestamp : Date.now();
+    if (timestamp > this.tmstamp) {
+      this.tmstamp = timestamp;
+    }
   }
 
-  _send2Storage(data: any) {
-    this.storage.save(data);
+  _renewStore() {
+    this.plain? this.unsub && this.unsub() : this._clean();
+    const store = this.store = this._instantiateStore(this.state);
+    const timestamp = Date.now();
+    this.outdted.map( ([t, u]) => t ? [t, u] : [timestamp, u] );
+    let state0 = cloneDeep(this.state);
+    const unsubscribe = this.store.subscribe( () => {
+      const state = store && store.getState();
+      const sameStore = this.store === store;
+      this._clean();
+      if (isEqual(state, this.state))
+        return;
+      if (sameStore) {
+        this._setState(state);
+      } else {
+        const diff = diffDeep(state, state0);
+        if (typeof diff === 'undefined')
+          return;
+        this._setState(mergeOrReplace(this.state, diff));
+        this._renewStore();
+      }
+      this._send2Storage();
+      this._callListeners(true, state0);
+      state0 = cloneDeep(state);
+    });
+    if (this.plain)
+      this.unsub = unsubscribe;
+    else
+      this.outdted.push([0, unsubscribe]);
   }
 
-  _setState(data: any) {
-    if (data) {
-      this.state = cloneDeep(data);
+  _clean() {
+    if (this.plain)
+      return;
+    const now = Date.now();
+    const nOld = this.outdted.length;
+    this.outdted.forEach( ([timestamp, unsubscribe], i) => {
+      if (i >= nOld-1 || now - timestamp < this.timeout)
+        return;
+      unsubscribe();
+      delete this.outdted[i];
+    });
+  }
+
+  _instantiateStore(state?: any) {
+    const store = this.container(state);
+    if (typeof store !== 'object' || typeof store.getState !== 'function')
+      throw new Error(`Invalid 'storeCreatorContainer' supplied`);
+    return store as ExtendedStore;
+  }
+
+  _send2Storage() {
+    this.storage.save( packState(this.state, this.id, this.tmstamp) );
+  }
+
+  _callListeners(local?: boolean, oldState?: any) {
+    local && this.lisner && this.lisner(this as ExtendedStore, oldState);
+    for (const fn of this.lisners) {
+      fn();
     }
   }
 
@@ -109,52 +182,22 @@ export default class ReduxedStorage<
     return this.state;
   }
 
-  subscribe(fn: ChangeListener) {
-    typeof fn === 'function' && this.listeners.push(fn);
+  subscribe(fn: StandardListener): Unsubscribe {
+    typeof fn === 'function' && this.lisners.push(fn);
     return () => {
       if (typeof fn === 'function') {
-        this.listeners = this.listeners.filter(v => v !== fn);
+        this.lisners = this.lisners.filter(v => v !== fn);
       }
     };
   }
 
   dispatch(action: A | ActionExtension) {
-    if (!this.buffStore) {
-      // this.buffStore is to be used with sync actions
-      this.buffStore = this._createStore(this.state) as ExtendedStore;
-      // this.lastState is shared by both sync and async actions
-      this.lastState = this.buffStore.getState();
-      setTimeout(() => {
-        this.buffStore = null;
-      }, this.buffLife);
-    }
-    // lastStore, holding an extra reference to the last created store, is to be used with async actions (e.g. via Redux Thunk);
-    // then when this.buffStore is reset to null this variable should still refer to the same store
-    let lastStore: ExtendedStore | null = this.buffStore;
-    // set up a one-time state change listener
-    const unsubscribe = lastStore.subscribe(() => {
-      // if this.buffStore is non-empty, use it for getting the current state,
-      // otherwise an async action is implied, so use lastStore instead
-      const store = this.buffStore || lastStore;
-      const state = store && store.getState();
-      // we need a state change to be effective, so the current state should differ from the last saved one
-      if (isEqual(state, this.lastState))
-        return;
-      // send the current state to chrome.storage & update this.lastState
-      this._send2Storage(state);
-      this.lastState = state;
-      // unsubscribe this listener and reset the lastStore in order to release the related resources
-      setTimeout(() => {
-        unsubscribe();
-        lastStore = null;
-      }, this.buffLife);
-    });
-    return lastStore.dispatch(action);
+    return this.store.dispatch(action);
   }
 
   replaceReducer(nextReducer: Reducer): ExtendedStore {
     if (typeof nextReducer === 'function') {
-      this.reducer = nextReducer;
+      this.store.replaceReducer(nextReducer);
     }
     return this as ExtendedStore;
   }
@@ -172,7 +215,7 @@ export default class ReduxedStorage<
           observerAsObserver.next && observerAsObserver.next(getState());
         }
         observeState();
-        const unsubscribe = subscribe(observeState) as Unsubscribe;
+        const unsubscribe = subscribe(observeState);
         return { unsubscribe };
       },
       [Symbol.observable]() {

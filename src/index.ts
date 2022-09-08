@@ -1,10 +1,10 @@
-import ReduxedStorage from './ReduxedStorage';
+import ReduxedStorage, { unpackState } from './ReduxedStorage';
 import WrappedChromeStorage from './WrappedChromeStorage';
 import WrappedBrowserStorage from './WrappedBrowserStorage';
-import { StoreCreator, StoreEnhancer, Reducer } from 'redux';
-import { ExtendedStore } from './types/store';
+import { ExtendedStore, StoreCreatorContainer } from './types/store';
 import { ChromeNamespace, BrowserNamespace } from './types/apis';
 import { ChangeListener, ErrorListener } from './types/listeners';
+import { cloneDeep, isEqual, diffDeep, mergeOrReplace } from './utils';
 
 enum Namespace {
   chrome = 'chrome',
@@ -13,65 +13,97 @@ enum Namespace {
 declare const chrome: ChromeNamespace;
 declare const browser: BrowserNamespace;
 
-export { ChromeNamespace, BrowserNamespace } from './types/apis';
-export { ChangeListener, ErrorListener } from './types/listeners';
+export {
+  ChromeNamespace, BrowserNamespace
+} from './types/apis';
+export {
+  ChangeListener, ErrorListener
+} from './types/listeners';
+export {
+  ExtendedDispatch, ExtendedStore, StoreCreatorContainer
+} from './types/store';
+
+export interface ReduxedSetupOptions {
+  namespace?: string;
+  chromeNs?: ChromeNamespace;
+  browserNs?: BrowserNamespace;
+  storageArea?: string;
+  storageKey?: string;
+  isolated?: boolean;
+  plainActions?: boolean;
+  outdatedTimeout?: number;
+}
+
+export interface ReduxedSetupListeners {
+  onGlobalChange?: ChangeListener;
+  onLocalChange?: ChangeListener;
+  onError?: ErrorListener;
+}
 
 /**
- * ReduxedChromeStorage creator factory.
- * Returns an async store creator that's supposed to replace
- * the original Redux's createStore function.
- * Unlike the original createStore() that immediately returns a store,
- * async store creator returns a Promise to be resolved
- * when the created store is ready
- * @param obj
- * @param obj.createStore the original Redux's createStore function.
- * The only mandatory property/option
- * @param obj.namespace string to identify the APIs namespace to be used,
- * either 'chrome' or 'browser'.
- * If this and the next two options are missing,
+ * Sets up Reduxed Chrome Storage
+ * @param storeCreatorContainer a function that calls a store creator
+ * and returns the created Redux store.
+ * Receives one argument to be passed as the preloadedState argument
+ * into the store creator. Store creator is either the Redux's createStore()
+ * or any function that wraps the createStore(), e.g. RTK's configureStore()
+ * @param options
+ * @param options.namespace string to identify the APIs namespace to be used,
+ * either 'chrome' or 'browser'. If this and the next two options are missing,
  * the chrome namespace is used by default
- * @param obj.chromeNs the chrome namespace within Manifest V2 extension.
+ * @param options.chromeNs the chrome namespace within Manifest V2 extension.
  * If this option is supplied, the previous one is ignored
- * @param obj.browserNs the browser namespace within Firefox extension,
+ * @param options.browserNs the browser namespace within Firefox extension,
  * or the chrome namespace within Manifest V3 chrome extension.
  * If this option is supplied, the previous two are ignored
- * @param obj.changeListener a function to be called whenever the state changes,
- * receives two parameters:
- * 1) a one-time store - container of the current state;
- * 2) the previous state.
- * If this option is supplied, the async store creator returned by the factory
- * is not supposed to be immediately used for store creation
- * @param obj.errorListener a function to be called whenever an error occurs
- * during chrome.storage update, receives two parameters:
+ * @param options.storageArea the name of chrome.storage area to be used,
+ * either 'local' or 'sync'. Defaults to 'local'
+ * @param options.storageKey the key under which the state will be
+ * stored/tracked in chrome.storage. Defaults to 'reduxed'
+ * @param options.isolated check this option if your store in this specific
+ * extension component isn't supposed to receive state changes from other
+ * extension components. Defaults to false
+ * @param options.plainActions check this option if your store is only supposed
+ * to dispatch plain object actions. Defaults to false
+ * @param options.outdatedTimeout max. time (in ms) to wait for outdated (async)
+ * actions to be completed. Defaults to 1000. This option is ignored
+ * if at least one of the previous two is checked
+ * @param listeners
+ * @param listeners.onGlobalChange a function to be called whenever the state
+ * changes that may be caused by any extension component (popup etc.).
+ * Receives two arguments:
+ * 1) a temporary store representing the current state;
+ * 2) the previous state
+ * @param listeners.onLocalChange a function to be called whenever a store in
+ * this specific extension component causes a change in the state.
+ * Receives two arguments:
+ * 1) reference to the store that caused this change in the state;
+ * 2) the previous state
+ * @param listeners.onError a function to be called whenever an error
+ * occurs during chrome.storage update. Receives two arguments:
  * 1) an error message defined by storage API;
  * 2) a boolean indicating if the limit for the used storage area is exceeded
- * @param obj.storageArea the name of chrome.storage area to be used,
- * either 'local' or 'sync', defaults to 'local'
- * @param obj.storageKey key under which the state will be stored/tracked
- * in chrome.storage, defaults to 'reduxed'
- * @param obj.bufferLife lifetime of the bulk actions buffer (in ms),
- * defaults to 100
- * @returns an async store creator to replace the original createStore function
+ * @returns a function that creates asynchronously a Redux store replacement
+ * connected to the state stored in chrome.storage.
+ * Receives one optional argument: some value to which the state
+ * will be reset entirely or partially upon the store replacement creation.
+ * Returns a Promise to be resolved when the created store replacement is ready
  */
-export default function reduxedStorageCreatorFactory({
-  createStore,
-  namespace, chromeNs, browserNs,
-  changeListener,
-  errorListener,
-  storageArea, storageKey, bufferLife
-}: {
-  createStore: StoreCreator,
-  namespace?: string,
-  chromeNs?: ChromeNamespace,
-  browserNs?: BrowserNamespace,
-  changeListener?: ChangeListener,
-  errorListener?: ErrorListener,
-  storageArea?: string,
-  storageKey?: string,
-  bufferLife?: number
-}) {
-  if (typeof createStore !== 'function')
-    throw new Error(`Missing 'createStore' property/option`);
+function setupReduxed(
+  storeCreatorContainer: StoreCreatorContainer,
+  options?: ReduxedSetupOptions,
+  listeners?: ReduxedSetupListeners
+) {
+  const {
+    namespace, chromeNs, browserNs,
+    storageArea, storageKey,
+    isolated, plainActions, outdatedTimeout
+  } = options || {};
+  const {
+    onGlobalChange, onLocalChange, onError
+  } = listeners || {};
+  if (typeof storeCreatorContainer !== 'function')
+    throw new Error(`Missing argument for 'storeCreatorContainer'`);
 
   const storage = browserNs || namespace === Namespace.browser?
     new WrappedBrowserStorage({
@@ -80,47 +112,27 @@ export default function reduxedStorageCreatorFactory({
     new WrappedChromeStorage({
       namespace: chromeNs || chrome, area: storageArea, key: storageKey
     });
-  storage.init();
-  typeof errorListener === 'function' &&
-  storage.subscribeForError(errorListener);
+  typeof onGlobalChange === 'function' &&
+  storage.regListener( (data, oldData) => {
+    const store = new ReduxedStorage(
+      storeCreatorContainer, storage, true, plainActions
+    );
+    const [ state ] = unpackState(data);
+    const [ oldState ] = unpackState(oldData);
+    onGlobalChange(store.initFrom(state), oldState);
+  });
+  isolated || storage.regShared();
 
-  function asyncStoreCreator(
-    reducer: Reducer,
-    enhancer?: StoreEnhancer
-  ): Promise<ExtendedStore>
-  function asyncStoreCreator(
-    reducer: Reducer,
-    initialState?: any,
-    enhancer?: StoreEnhancer
-  ): Promise<ExtendedStore>
-  function asyncStoreCreator(
-    reducer: Reducer,
-    initialState?: any | StoreEnhancer,
-    enhancer?: StoreEnhancer
-  ): Promise<ExtendedStore> {
-    if (typeof reducer !== 'function')
-      throw new Error(`Missing 'reducer' parameter`);
-    if (typeof initialState === 'function' && typeof enhancer === 'function')
-      throw new Error(`Multiple 'enhancer' parameters unallowed`);
-    if (typeof initialState === 'function' && typeof enhancer === 'undefined') {
-      enhancer = initialState as StoreEnhancer
-      initialState = undefined
-    }
-    const opts = {
-      createStore, storage, bufferLife, reducer, initialState, enhancer
-    };
-    if (typeof changeListener === 'function') {
-      storage.subscribe((data, oldData) => {
-        const store = new ReduxedStorage(opts);
-        changeListener(store.initFrom(data), oldData);
-      });
-      return new Promise( resolve => {
-        resolve( createStore( state => state) as ExtendedStore );
-      });
-    }
-    const store = new ReduxedStorage(opts);
+  const instantiate = (resetState?: any): Promise<ExtendedStore> => {
+    onError && storage.subscribeForError(onError);
+    const store = new ReduxedStorage(
+      storeCreatorContainer, storage, isolated, plainActions, outdatedTimeout,
+      onLocalChange, resetState
+    );
     return store.init();
   }
 
-  return asyncStoreCreator;
+  return instantiate;
 }
+
+export { setupReduxed, cloneDeep, isEqual, diffDeep, mergeOrReplace }

@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
 import reset from './shortcuts/reset';
-import storeCreatorFactory from './shortcuts/factory';
+import setup from './shortcuts/setup';
 import { addTodo, toggleTodo } from './samples/todos/actions';
 import todosReducer from './samples/todos/reducers';
 
@@ -10,7 +10,7 @@ describe('Sync actions in bulk', () => {
   beforeEach(reset);
 
   it("create a store with TodoList reducer; dispatch 5 consecutive actions on it adding 3 todos and checking the 1st and 3rd ones as completed; as a result, the current state should equal the predefined value", async () => {
-    const store = await storeCreatorFactory()( todosReducer );
+    const store = await setup( todosReducer )();
 
     const clock = sinon.useFakeTimers();
     store.dispatch(addTodo('todo1'));

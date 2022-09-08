@@ -3,7 +3,7 @@ import {
 } from './types/apis';
 import { ErrorListener } from './types/listeners';
 
-type Listener = (data: any, oldData?: any) => void;
+type StorageListener = (data: any, oldData?: any) => void;
 export type LoadCallback = (data?: any) => void;
 
 const usageSize = (data: StorageData) => 
@@ -17,8 +17,8 @@ export default abstract class WrappedStorage<N extends ApisNamespace> {
   ns: N;
   areaName: StorageAreaName;
   key: string;
-  listeners: Listener[];
-  errorListeners: ErrorListener[];
+  listeners: StorageListener[];
+  errListeners: ErrorListener[];
 
   constructor({
     namespace, area, key
@@ -30,35 +30,37 @@ export default abstract class WrappedStorage<N extends ApisNamespace> {
       StorageAreaName.local;
     this.key = key || 'reduxed';
     this.listeners = [];
-    this.errorListeners = [];
+    this.errListeners = [];
   }
 
-  init() {
-    // Setup internal (shared) listener for chrome.storage.onChanged
-    this.ns.storage.onChanged.addListener((changes, area) => {
-      if (area !== this.areaName || !(this.key in changes))
-        return;
-      const {newValue, oldValue} = changes[this.key];
-      if (!newValue)
-        return;
-      // call external chrome.storage.onChanged listeners
-      for (const fn of this.listeners) {
-        fn(newValue, oldValue);
+  regShared() {
+    this.regListener( (newValue, oldValue) => {
+      for (const listener of this.listeners) {
+        listener(newValue, oldValue);
       }
     });
   }
 
-  subscribe(fn: Listener) {
-    typeof fn === 'function' && this.listeners.push(fn);
+  regListener(listener: StorageListener) {
+    this.ns.storage.onChanged.addListener( (changes, area) => {
+      if (area !== this.areaName || !(this.key in changes))
+        return;
+      const {newValue, oldValue} = changes[this.key];
+      newValue && listener(newValue, oldValue);
+    });
   }
 
-  subscribeForError(fn: ErrorListener) {
-    typeof fn === 'function' && this.errorListeners.push(fn);
+  subscribe(listener: StorageListener) {
+    typeof listener === 'function' && this.listeners.push(listener);
+  }
+
+  subscribeForError(listener: ErrorListener) {
+    typeof listener === 'function' && this.errListeners.push(listener);
   }
 
   fireErrorListeners(message: string, exceeded: boolean) {
-    for (const fn of this.errorListeners) {
-      fn(message, exceeded);
+    for (const listener of this.errListeners) {
+      listener(message, exceeded);
     }
   }
 

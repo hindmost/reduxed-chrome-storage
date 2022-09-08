@@ -1,3 +1,4 @@
+import resolve from '@rollup/plugin-node-resolve';
 import typescript from 'rollup-plugin-typescript2';
 import del from 'rollup-plugin-delete';
 import buble from '@rollup/plugin-buble';
@@ -27,6 +28,7 @@ export default [
       format: 'es'
     },
     plugins: [
+      resolve(),
       typescript({
         tsconfigOverride: { compilerOptions: { declaration: true } }
       }),
@@ -46,6 +48,7 @@ export default [
       format: 'umd'
     },
     plugins: [
+      resolve(),
       typescript(),
       buble(bubleOpts),
       license(licenseOpts)
@@ -60,6 +63,7 @@ export default [
       format: 'umd'
     },
     plugins: [
+      resolve(),
       typescript(),
       buble(bubleOpts),
       terser({
