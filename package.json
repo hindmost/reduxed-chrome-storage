@@ -37,6 +37,7 @@
     "eslint-import-resolver-typescript": "^3.5",
     "eslint-plugin-import": "^2.26",
     "mocha": "^10.0",
+    "redux": "^4.2",
     "@reduxjs/toolkit": "1.8",
     "rollup": "^2.79",
     "@rollup/plugin-buble": "^0.21",
