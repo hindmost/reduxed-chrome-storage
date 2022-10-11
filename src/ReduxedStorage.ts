@@ -79,7 +79,7 @@ export default class ReduxedStorage<
         mergeOrReplace(this.state, state) : mergeOrReplace(state, this.state);
       !newTime && isEqual(newState, this.state) ||
         ( this._setState(newState, timestamp), this._renewStore() );
-      newTime && isEqual(newState, state) ||
+      if (newTime && !isEqual(newState, state))
         this._send2Storage();
       this._callListeners();
     });
