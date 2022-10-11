@@ -77,10 +77,13 @@ export default class ReduxedStorage<
       const newTime = timestamp >= this.tmstamp;
       const newState = newTime?
         mergeOrReplace(this.state, state) : mergeOrReplace(state, this.state);
-      !newTime && isEqual(newState, this.state) ||
-        ( this._setState(newState, timestamp), this._renewStore() );
-      if (newTime && !isEqual(newState, state))
+      if (!newTime && isEqual(newState, this.state))
+        return;
+      this._setState(newState, timestamp);
+      this._renewStore();
+      if (!isEqual(newState, state)) {
         this._send2Storage();
+      }
       this._callListeners();
     });
     const defaultState = this.store.getState();
