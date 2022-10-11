@@ -38,9 +38,9 @@ function diffDeep(a: any, b: any): any {
     return a;
   if (Array.isArray(a) || Array.isArray(b))
     return isEqual(a, b)? undefined : a;
-  const keysB = Object.keys(b);
+  const keysA = Object.keys(a), keysB = Object.keys(b);
   let eq = true;
-  const ret = Object.keys(a).reduce((acc: any, key) => {
+  const ret = keysA.reduce( (acc: any, key) => {
     const diff = keysB.indexOf(key) > -1? diffDeep(a[key], b[key]) : a[key];
     if (typeof diff === 'undefined')
       return acc;
@@ -48,20 +48,33 @@ function diffDeep(a: any, b: any): any {
     acc[key] = diff;
     return acc;
   }, {});
+  keysB.forEach( key => {
+    if (keysA.indexOf(key) > -1)
+      return;
+    eq = false;
+    ret[key] = undefined;
+  });
   return eq? undefined : ret;
 }
 
-function mergeOrReplace(a: any, b: any): any {
+function mergeOrReplace(a: any, b: any, withReduction?: boolean): any {
   if (Array.isArray(b))
     return cloneDeep(b);
   if (a == null || typeof a !== 'object' || Array.isArray(a) ||
       b == null || typeof b !== 'object')
-    return typeof b !== 'undefined'? b : a;
-  return Object.keys(a).concat(
+    return cloneDeep(typeof b !== 'undefined'? b : a);
+  const ret = Object.keys(a).concat(
       Object.keys(b).filter(key => !(key in a))
     ).reduce((acc: any, key) => {
-      return acc[key] = mergeOrReplace(a[key], b[key]), acc
+      return acc[key] = mergeOrReplace(a[key], b[key], withReduction), acc
     }, {});
+  if (!withReduction)
+    return ret;
+  const keysB = Object.keys(b);
+  Object.keys(a).forEach( key => {
+    keysB.indexOf(key) > -1 || delete ret[key];
+  });
+  return ret;
 }
 
 export { cloneDeep, isEqual, diffDeep, mergeOrReplace }

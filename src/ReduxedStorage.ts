@@ -75,8 +75,9 @@ export default class ReduxedStorage<
       if (id === this.id || isEqual(state, this.state))
         return;
       const newTime = timestamp >= this.tmstamp;
-      const newState = newTime?
-        mergeOrReplace(this.state, state) : mergeOrReplace(state, this.state);
+      const newState = newTime ?
+        mergeOrReplace(this.state, state, true) :
+        mergeOrReplace(state, this.state, true);
       if (!newTime && isEqual(newState, this.state))
         return;
       this._setState(newState, timestamp);
@@ -140,7 +141,7 @@ export default class ReduxedStorage<
         const diff = diffDeep(state, state0);
         if (typeof diff === 'undefined')
           return;
-        this._setState(mergeOrReplace(this.state, diff));
+        this._setState(mergeOrReplace(this.state, diff, true));
         this._renewStore();
       }
       this._send2Storage();

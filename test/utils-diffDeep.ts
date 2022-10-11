@@ -32,6 +32,28 @@ describe('[utils/] diffDeep() function', () => {
     expect(ret).to.eql(diff);
   });
 
+  it("diffDeep(object, other_object) = deep difference between object and other_object", async () => {
+    const otherObj = {
+      one: 1,
+      two: "two",
+      three: {
+        id: 1,
+        value: 500,
+        v: 1
+      },
+      four: [2, 3, 4],
+      five: "five"
+    };
+    const ret = diffDeep(obj, otherObj);
+    const diff = {
+      three: {
+        v: undefined
+      },
+      five: undefined
+    }
+    expect(ret).to.eql(diff);
+  });
+
   it("diffDeep(object, same_as_object) = undefined", async () => {
     const sameAsObj = {
       one: 1,
