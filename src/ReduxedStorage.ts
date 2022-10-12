@@ -141,7 +141,7 @@ export default class ReduxedStorage<
         const diff = diffDeep(state, state0);
         if (typeof diff === 'undefined')
           return;
-        this._setState(mergeOrReplace(this.state, diff, true));
+        this._setState(mergeOrReplace(this.state, diff));
         this._renewStore();
       }
       this._send2Storage();
