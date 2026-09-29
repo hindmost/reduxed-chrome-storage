@@ -31,12 +31,14 @@ export default class ReduxedStorage<
   storage: W;
   isolated?: boolean;
   plain?: boolean;
+  delay?: number;
   timeout: number;
   resetState: any;
   store: ExtendedStore;
   state: any;
   id: string;
   tmstamp: number;
+  timerId?: any;
   lisner?: ChangeListener;
   lisners: StandardListener[];
   unsub?: Unsubscribe;
@@ -44,13 +46,15 @@ export default class ReduxedStorage<
 
   constructor(
     container: StoreCreatorContainer, storage: W,
-    isolated?: boolean, plainActions?: boolean, outdatedTimeout?: number,
+    isolated?: boolean, plainActions?: boolean,
+    syncDelay?: number, outdatedTimeout?: number,
     localChangeListener?: ChangeListener, resetState?: any
   ) {
     this.container = container;
     this.storage = storage;
     this.isolated = isolated;
     this.plain = plainActions;
+    this.delay = syncDelay? Math.min(Math.max(syncDelay, 50), 500) : 0;
     this.timeout = outdatedTimeout? Math.max(outdatedTimeout, 500) : 1000;
     this.resetState = resetState;
     this.store = this._instantiateStore();
@@ -144,7 +148,7 @@ export default class ReduxedStorage<
         this._setState(mergeOrReplace(this.state, diff));
         this._renewStore();
       }
-      this._send2Storage();
+      this.delay? this._send2StorageDelayd() : this._send2Storage();
       this._callListeners(true, state0);
       state0 = cloneDeep(state);
     });
@@ -176,6 +180,22 @@ export default class ReduxedStorage<
 
   _send2Storage() {
     this.storage.save( packState(this.state, this.id, this.tmstamp) );
+  }
+
+  _send2StorageDelayd() {
+    if (this.timerId)
+      return;
+    this.timerId = setTimeout(() => {
+      this._clearTimer();
+      this._send2Storage();
+    }, this.delay);
+  }
+
+  _clearTimer() {
+    if (!this.timerId)
+      return;
+    clearTimeout(this.timerId);
+    this.timerId = 0;
   }
 
   _callListeners(local?: boolean, oldState?: any) {

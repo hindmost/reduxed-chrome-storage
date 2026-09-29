@@ -198,6 +198,12 @@ Default: `1000`
 
 Max. time (in ms) to wait for _outdated_ (async) actions to be completed (see [How It Works](#internal-store-external-state-updates-and-outdated-actions) section for details). This option is ignored if at least one of the previous two (`isolated`/`plainActions`) options is checked.
 
+#### syncDelay
+Type: `number`<br>
+Default: `0`
+
+Delay (in ms) before state changes are stored in `chrome.storage`. When this option is set, consecutive state changes made within the respective period are accumulated and sent as one update to `chrome.storage` once the period is over. Recommended value: `50`. Defaults to `0` (no delay).
+
 ### Listeners
 
 `setupReduxed()` also allows to specify an error listener as well as two kinds of state change listeners. These listeners are specified as named properties within optional third argument. Below are their descriptions.
