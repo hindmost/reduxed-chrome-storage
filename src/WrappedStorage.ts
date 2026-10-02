@@ -1,4 +1,4 @@
-import {
+import type {
   ApisNamespace, StorageAreaName, StorageAreaQuotas, StorageData
 } from './types/apis';
 import { ErrorListener } from './types/listeners';
@@ -26,8 +26,7 @@ export default abstract class WrappedStorage<N extends ApisNamespace> {
     namespace: N, area?: string, key?: string
   }) {
     this.ns = namespace;
-    this.areaName = area === StorageAreaName.sync? StorageAreaName.sync :
-      StorageAreaName.local;
+    this.areaName = area === 'sync'? 'sync' : 'local';
     this.key = key || 'reduxed';
     this.listeners = [];
     this.errListeners = [];
@@ -78,7 +77,7 @@ export default abstract class WrappedStorage<N extends ApisNamespace> {
       this.fireErrorListeners(message || '', false);
       return;
     }
-    const b = this.areaName === StorageAreaName.sync &&
+    const b = this.areaName === 'sync' &&
       area.QUOTA_BYTES_PER_ITEM &&
       usageSize({ [this.key]: data }) > area.QUOTA_BYTES_PER_ITEM;
     if (b) {

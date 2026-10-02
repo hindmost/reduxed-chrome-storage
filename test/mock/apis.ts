@@ -1,18 +1,17 @@
 import {
-  StorageAreaName, StorageData,
+  StorageAreaName, StorageData, StorageChanges,
   StorageGetKeys, StorageGetCallback, StorageListener,
   StorageAreaCallbacked, StorageAreaPromised, ChromeNamespace, BrowserNamespace
 } from '../../src/types/apis';
 import { cloneDeep }  from '../../src/utils';
 
 const pick = (obj: StorageData, keys: StorageGetKeys) => {
-  if (typeof obj !== 'object')
+  if (typeof obj !== 'object' || !keys)
     return obj;
   const ret: StorageData = {};
   keys = typeof keys === 'string'? [keys] : keys;
-  const isArr = Array.isArray(keys);
   for (const key in obj) {
-    if (isArr? keys.includes(key) : keys[key]) {
+    if (Array.isArray(keys)? keys.includes(key) : keys[key]) {
       ret[key] = obj[key];
     }
   }
@@ -26,8 +25,7 @@ class SharedStorageArea {
   name: StorageAreaName;
 
   constructor(name: string) {
-    this.name = name === StorageAreaName.sync? StorageAreaName.sync :
-      StorageAreaName.local;
+    this.name = name === 'sync'? 'sync' : 'local';
   }
 
   _get(keys?: StorageGetKeys, fn?: StorageGetCallback): void {
@@ -38,7 +36,7 @@ class SharedStorageArea {
     }, 0);
   }
   _set(data: StorageData, callback?: () => void) {
-    const changes = {};
+    const changes: StorageChanges = {};
     for (const key in data) {
       const oldValue = cloneDeep(storageData[key]);
       const newValue = storageData[key] = cloneDeep(data[key]);

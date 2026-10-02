@@ -1,5 +1,4 @@
-import { expect } from 'chai';
-import sinon from 'sinon';
+import { describe, beforeEach, it, expect, vi } from "vitest";
 import reset from './shortcuts/reset';
 import setup from './shortcuts/setup';
 import { addTodo } from './samples/todos/actions';
@@ -16,12 +15,12 @@ describe("State persistence through extension's activity periods (browser sessio
     it("create a store with TodoList reducer; dispatch an action on it; store its current state in a variable; create another store (with the same reducer) representing the next session; as a result, its current state should equal the previously stored value", async () => {
       const storeOfSession1 = await setup( todosReducer )();
 
-      const clock = sinon.useFakeTimers();
-      clock.tick(1);
+      const clock = vi.useFakeTimers();
+      clock.advanceTimersByTime(1);
       storeOfSession1.dispatch(addTodo('todo1'));
-      clock.tick(1);
+      clock.advanceTimersByTime(1);
       const stateOfSession1 = storeOfSession1.getState();
-      clock.restore();
+      clock.useRealTimers();
 
       const storeOfSession2 = await setup( todosReducer )();
       expect(storeOfSession2.getState()).to.eql(stateOfSession1);
@@ -37,13 +36,13 @@ describe("State persistence through extension's activity periods (browser sessio
       };
       const storeOfSession1 = await setup( reducers )();
 
-      const clock = sinon.useFakeTimers();
-      clock.tick(1);
+      const clock = vi.useFakeTimers();
+      clock.advanceTimersByTime(1);
       storeOfSession1.dispatch(addTodo('todo1'));
       storeOfSession1.dispatch(setVisibilityFilter(VisibilityFilters.SHOW_ACTIVE));
-      clock.tick(1);
+      clock.advanceTimersByTime(1);
       const stateOfSession1 = storeOfSession1.getState();
-      clock.restore();
+      clock.useRealTimers();
 
       const storeOfSession2 = await setup( reducers )( {
         filter: VisibilityFilters.SHOW_ALL

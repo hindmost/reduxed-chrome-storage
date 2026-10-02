@@ -1,4 +1,4 @@
-import { expect } from 'chai';
+import { describe, it, expect } from "vitest";
 import { isEqual } from '../src/utils';
 
 describe('[utils/] isEqual() function', () => {

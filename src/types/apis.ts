@@ -1,31 +1,26 @@
-export enum StorageAreaName {
-  local = 'local',
-  sync = 'sync'
-}
+export type StorageAreaName = 'sync' | 'local' | 'managed' | 'session'
 
-interface StorageChange {
+export type StorageChange = {
   newValue?: any;
   oldValue?: any;
 }
 
-interface StorageChanges {
+export type StorageChanges = {
   [key: string]: StorageChange
 }
 
-export interface StorageListener {
-  (changes: StorageChanges, area: StorageAreaName): void
+export type StorageListener =
+  (changes: StorageChanges, area: StorageAreaName) => void
+
+export type StorageAddListener =
+  (listener: StorageListener) => void
+
+export type StorageData = {
+  [key: string]: any
 }
 
-export interface StorageAddListener {
-  (listener: StorageListener): void;
-}
-
-export interface StorageData {
-  [key: string]: any;
-}
-
-export type StorageGetCallback = (data: StorageData) => void;
-export type StorageGetKeys = string | string[] | StorageData | null;
+export type StorageGetCallback = (data: StorageData) => void
+export type StorageGetKeys = string | string[] | StorageData | null
 
 export interface StorageAreaQuotas {
   QUOTA_BYTES: number;
@@ -53,23 +48,23 @@ export interface ApisNamespace {
   },
   runtime: {
     lastError?: {
-      message?: string;
-    };
+      message?: string
+    }
   }
 }
 
 export interface ChromeNamespace extends ApisNamespace {
   storage: {
-    local: StorageAreaCallbacked,
-    sync: StorageAreaCallbacked,
-    onChanged: ApisNamespace['storage']['onChanged']
+    local: StorageAreaCallbacked;
+    sync: StorageAreaCallbacked;
+    onChanged: ApisNamespace['storage']['onChanged'];
   }
 }
 
 export interface BrowserNamespace extends ApisNamespace {
   storage: {
-    local: StorageAreaPromised,
-    sync: StorageAreaPromised,
-    onChanged: ApisNamespace['storage']['onChanged']
+    local: StorageAreaPromised;
+    sync: StorageAreaPromised;
+    onChanged: ApisNamespace['storage']['onChanged'];
   }
 }

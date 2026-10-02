@@ -1,5 +1,4 @@
-import { expect } from 'chai';
-import sinon from 'sinon';
+import { describe, beforeEach, it, expect, vi } from "vitest";
 import reset from './shortcuts/reset';
 import setup from './shortcuts/setup';
 import {
@@ -21,20 +20,20 @@ describe("Async actions", () => {
       const instantiate = setup( todosReducer );
       const store = await instantiate();
 
-      const clock = sinon.useFakeTimers();
+      const clock = vi.useFakeTimers();
       store.dispatch(delayAddTodo('todo1'));
-      clock.tick(1);
+      clock.advanceTimersByTime(1);
       store.dispatch(delayToggleTodo(1));
       expect(store.getState()).to.eql([]);
-      clock.tick(999);
+      clock.advanceTimersByTime(999);
       expect(store.getState()).to.eql([
         {id: 1, text: 'todo1', completed: false}
       ]);
-      clock.tick(1);
+      clock.advanceTimersByTime(1);
       expect(store.getState()).to.eql([
         {id: 1, text: 'todo1', completed: true}
       ]);
-      clock.restore();
+      clock.useRealTimers();
     });
 
   });
@@ -45,21 +44,21 @@ describe("Async actions", () => {
       const instantiate = setup( todosReducer );
       const store = await instantiate();
 
-      const clock = sinon.useFakeTimers();
+      const clock = vi.useFakeTimers();
       store.dispatch(delayAddTodo('todo1', 2000));
-      clock.tick(1);
+      clock.advanceTimersByTime(1);
       store.dispatch(delayAddTodo('todo2', 1000));
       expect(store.getState()).to.eql([]);
-      clock.tick(1001);
+      clock.advanceTimersByTime(1001);
       expect(store.getState()).to.eql([
         {id: 1, text: 'todo2', completed: false}
       ]);
-      clock.tick(1000);
+      clock.advanceTimersByTime(1000);
       expect(store.getState()).to.eql([
         {id: 1, text: 'todo2', completed: false},
         {id: 2, text: 'todo1', completed: false}
       ]);
-      clock.restore();
+      clock.useRealTimers();
     });
 
   });
@@ -70,17 +69,17 @@ describe("Async actions", () => {
       const instantiate = setup( todosReducer );
       const store = await instantiate();
 
-      const clock = sinon.useFakeTimers();
+      const clock = vi.useFakeTimers();
       expect(store.getState()).to.eql([]);
       store.dispatch(batchAddTodos(['todo1', 'todo2', 'todo3', 'todo4']));
-      clock.tick(1);
+      clock.advanceTimersByTime(1);
       expect(store.getState()).to.eql([
         { id: 1, text: 'todo1', completed: false },
         { id: 2, text: 'todo2', completed: false },
         { id: 3, text: 'todo3', completed: false },
         { id: 4, text: 'todo4', completed: false },
       ]);
-      clock.restore();
+      clock.useRealTimers();
     });
 
   });
@@ -94,11 +93,11 @@ describe("Async actions", () => {
       const storeOfOne = await setup( reducers )();
       const storeOfTwo = await setup( reducers )();
 
-      const clock = sinon.useFakeTimers();
+      const clock = vi.useFakeTimers();
       storeOfOne.dispatch(delayAddTodo('todo1', 1000));
       storeOfOne.dispatch(delayAddTodo('todo2', 2000));
       storeOfTwo.dispatch( setVisibilityFilter(VisibilityFilters.SHOW_ACTIVE) );
-      clock.tick(2001);
+      clock.advanceTimersByTime(2001);
       storeOfOne.dispatch(addTodo('todo3'));
       expect(storeOfOne.getState()).to.eql({
         todos: [
@@ -107,7 +106,7 @@ describe("Async actions", () => {
         ],
         filter: VisibilityFilters.SHOW_ACTIVE
       });
-      clock.restore();
+      clock.useRealTimers();
     });
 
   });

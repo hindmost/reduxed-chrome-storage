@@ -1,7 +1,7 @@
 import {
   configureStore, Reducer, ReducersMapObject
 } from '@reduxjs/toolkit';
-import { setupReduxed, ChangeListener } from '../../src';
+import { setupReduxed, type ChangeListener, type ChromeNamespace } from '../../src';
 import { chrome } from '../mock/apis';
 
 export default function (

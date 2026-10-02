@@ -1,12 +1,12 @@
-import {
+import type {
   Action, Reducer,
   Observer, Observable, Unsubscribe
 } from 'redux';
 import { v4 as uuid } from 'uuid';
 import WrappedStorage from './WrappedStorage';
 import { cloneDeep, isEqual, diffDeep, mergeOrReplace } from './utils';
-import { ChangeListener } from './types/listeners';
-import {
+import type { ChangeListener } from './types/listeners';
+import type {
   ActionExtension, ExtendedStore, StoreCreatorContainer
 } from './types/store';
 

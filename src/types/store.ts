@@ -1,4 +1,4 @@
-import { Store, Action, AnyAction, compose } from 'redux';
+import { type Store, type Action, type AnyAction, compose } from 'redux';
 
 export type ActionExtension =  ReturnType<typeof compose>;
 

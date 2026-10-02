@@ -1,12 +1,12 @@
 import { AnyAction } from 'redux';
 
-interface Todo {
+type Todo = {
   id: number;
   text?: string;
   completed?: boolean;
 }
 
-const todos = (state = [], action: AnyAction): Todo[] => {
+export default function todos(state: Todo[] = [], action: AnyAction): Todo[] {
   switch (action.type) {
     case 'ADD_TODO':
       return [
@@ -24,6 +24,4 @@ const todos = (state = [], action: AnyAction): Todo[] => {
     default:
       return state;
   }
-};
-
-export default todos;
+}

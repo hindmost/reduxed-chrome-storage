@@ -1,25 +1,21 @@
 import ReduxedStorage, { unpackState } from './ReduxedStorage';
 import WrappedChromeStorage from './WrappedChromeStorage';
 import WrappedBrowserStorage from './WrappedBrowserStorage';
-import { ExtendedStore, StoreCreatorContainer } from './types/store';
-import { ChromeNamespace, BrowserNamespace } from './types/apis';
-import { ChangeListener, ErrorListener } from './types/listeners';
+import type { ExtendedStore, StoreCreatorContainer } from './types/store';
+import type { ChromeNamespace, BrowserNamespace } from './types/apis';
+import type { ChangeListener, ErrorListener } from './types/listeners';
 import { cloneDeep, isEqual, diffDeep, mergeOrReplace } from './utils';
 
-enum Namespace {
-  chrome = 'chrome',
-  browser = 'browser'
-}
 declare const chrome: ChromeNamespace;
 declare const browser: BrowserNamespace;
 
-export {
+export type {
   ChromeNamespace, BrowserNamespace
 } from './types/apis';
-export {
+export type {
   ChangeListener, ErrorListener
 } from './types/listeners';
-export {
+export type {
   ExtendedDispatch, ExtendedStore, StoreCreatorContainer
 } from './types/store';
 
@@ -46,7 +42,7 @@ export interface ReduxedSetupListeners {
  * @param storeCreatorContainer a function that calls a store creator and
  *   returns the created Redux store
  * @param [options] object of options
- * @param [listeners] object of listeners
+ * @param [listeners] object of special listeners
  * @returns a function that creates asynchronously a Redux store replacement
  *   connected to the state stored in chrome.storage
  */
@@ -66,12 +62,12 @@ function setupReduxed(
   if (typeof storeCreatorContainer !== 'function')
     throw new Error(`Missing argument for 'storeCreatorContainer'`);
 
-  const storage = browserNs || namespace === Namespace.browser?
-    new WrappedBrowserStorage({
-      namespace: browserNs || browser, area: storageArea, key: storageKey
-    }) : 
+  const storage = chromeNs || namespace === 'chrome'?
     new WrappedChromeStorage({
       namespace: chromeNs || chrome, area: storageArea, key: storageKey
+    }) : 
+    new WrappedBrowserStorage({
+      namespace: browserNs || browser, area: storageArea, key: storageKey
     });
   typeof onGlobalChange === 'function' &&
   storage.regListener( (data, oldData) => {
