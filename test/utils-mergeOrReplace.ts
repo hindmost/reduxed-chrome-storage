@@ -1,10 +1,10 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect } from 'vitest';
 import { mergeOrReplace } from '../src/utils';
 
-describe('[utils/] mergeOrReplace() function', () => {
+describe(`[utils/] mergeOrReplace() function`, () => {
   const obj = {
     one: 1,
-    two: "two",
+    two: 'two',
     three: {
       id: 1,
       value: 500
@@ -13,30 +13,30 @@ describe('[utils/] mergeOrReplace() function', () => {
   };
   const reducedObj = {
     one: 1,
-    two: "two",
+    two: 'two',
     three: {
       id: 1,
     }
   };
 
-  it("mergeOrReplace(object, reduced_object) = object", async () => {
+  it(`mergeOrReplace(object, reduced_object) = object`, async () => {
     const ret = mergeOrReplace(obj, reducedObj);
     expect(ret).to.eql(obj);
   });
 
-  it("mergeOrReplace(object, reduced_object, true) = reduced_object", async () => {
+  it(`mergeOrReplace(object, reduced_object, true) = reduced_object`, async () => {
     const ret = mergeOrReplace(obj, reducedObj, true);
     expect(ret).to.eql(reducedObj);
   });
 
-  it("mergeOrReplace(object, other_object) = other_object", async () => {
+  it(`mergeOrReplace(object, other_object) = other_object`, async () => {
     const otherObj = {
       one: 0,
       two: {
         id: 1,
         value: 500
       },
-      three: "three",
+      three: 'three',
       four: [2, 3, 5]
     };
     const ret = mergeOrReplace(obj, otherObj);
@@ -45,7 +45,7 @@ describe('[utils/] mergeOrReplace() function', () => {
     expect(ret).to.not.eql(otherObj);
   });
 
-  it("mergeOrReplace(object_with_null, object_with_nested_object) = object_with_nested_object", async () => {
+  it(`mergeOrReplace(object_with_null, object_with_nested_object) = object_with_nested_object`, async () => {
     const objWithNull = {
       key: null
     };

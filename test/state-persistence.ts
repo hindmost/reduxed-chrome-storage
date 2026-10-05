@@ -1,4 +1,4 @@
-import { describe, beforeEach, it, expect, vi } from "vitest";
+import { describe, beforeEach, it, expect, vi } from 'vitest';
 import reset from './shortcuts/reset';
 import setup from './shortcuts/setup';
 import { addTodo } from './samples/todos/actions';
@@ -6,13 +6,17 @@ import { setVisibilityFilter, VisibilityFilters } from './samples/filter/actions
 import todosReducer from './samples/todos/reducers';
 import filterReducer from './samples/filter/reducers';
 
-describe("State persistence through extension's activity periods (browser sessions in the case of persistent extension)", () => {
+describe(`State persistence through extension's activity periods (browser sessions in the case of persistent extension)`, () => {
 
   beforeEach(reset);
 
-  describe('Regular usage', () => {
+  describe(`Regular usage`, () => {
 
-    it("create a store with TodoList reducer; dispatch an action on it; store its current state in a variable; create another store (with the same reducer) representing the next session; as a result, its current state should equal the previously stored value", async () => {
+    it(`create a store with TodoList reducer; dispatch an action on it;
+store its current state in a variable;
+create another store (with the same reducer) representing the next session;
+as a result, its current state should equal the previously stored value
+`, async () => {
       const storeOfSession1 = await setup( todosReducer )();
 
       const clock = vi.useFakeTimers();
@@ -28,9 +32,16 @@ describe("State persistence through extension's activity periods (browser sessio
 
   });
 
-  describe("Advanced usage along with resetState argument supplied for instantiate method", () => {
+  describe(`Advanced usage along with resetState argument supplied for instantiate method`, () => {
 
-    it("create a store with combined TodoList+VisibilityFilter reducer; dispatch an action adding one todo; dispatch another action setting VisibilityFilter to 'SHOW_ACTIVE'; store the current state in a variable; create another store (with the same reducer) representing the next session; as a result, VisibilityFilter property of the current state should equal 'SHOW_ACTIVE', while TodoList property should equal its counterpart in the previously stored state", async () => {
+    it(`create a store with combined TodoList+VisibilityFilter reducer;
+dispatch an action adding one todo;
+dispatch another action setting VisibilityFilter to 'SHOW_ACTIVE';
+store the current state in a variable;
+create another store (with the same reducer) representing the next session;
+as a result, VisibilityFilter property of the current state should equal 'SHOW_ACTIVE',
+while TodoList property should equal its counterpart in the previously stored state
+`, async () => {
       const reducers = {
         todos: todosReducer, filter: filterReducer
       };

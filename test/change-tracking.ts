@@ -1,16 +1,22 @@
-import { describe, beforeEach, it, expect, vi } from "vitest";
+import { describe, beforeEach, it, expect, vi } from 'vitest';
 import reset from './shortcuts/reset';
 import setup from './shortcuts/setup';
 import { addTodo } from './samples/todos/actions';
 import todosReducer from './samples/todos/reducers';
 
-describe('State change tracking', () => {
+describe(`State change tracking`, () => {
 
   beforeEach(reset);
 
-  describe('In persistent background script', () => {
+  describe(`In persistent background script`, () => {
 
-    it("create two stores representing background script and popup page (for example), both with TodoList reducer; add a change listener on the 1st store; dispatch an action on the 2nd store; as a result, the listener should be called once and getState() calls on both stores should return the same value", async () => {
+    it(`create two stores representing background script and popup page (for example),
+both with TodoList reducer;
+add a change listener on the 1st store;
+dispatch an action on the 2nd store;
+as a result, the listener should be called once and
+getState() calls on both stores should return the same value
+`, async () => {
       const instantiate = setup( todosReducer );
       const storeOfBg = await instantiate();
       const spyInBg = vi.fn();
@@ -29,9 +35,15 @@ describe('State change tracking', () => {
 
   });
 
-  describe("In Manifest V3 service worker", () => {
+  describe(`In Manifest V3 service worker`, () => {
 
-    it("create a store representing popup page (for example) with TodoList reducer; set up a change listener in a service worker via special factory option; dispatch an action on the created store; as a result, the listener should be called with two arguments: 1st one should be a Redux store with the same state as of the created store and 2nd one representing the previous state should equal empty array", async () => {
+    it(`create a store representing popup page (for example) with TodoList reducer;
+set up a change listener in a service worker via special factory option;
+dispatch an action on the created store;
+as a result, the listener should be called with two arguments:
+1st one should be a Redux store with the same state as of the created store and
+2nd one representing the previous state should equal empty array
+`, async () => {
       const storeOfPopup = await setup( todosReducer )();
 
       const spyInSw = vi.fn();

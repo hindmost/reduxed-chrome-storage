@@ -1,10 +1,10 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect } from 'vitest';
 
 import { setupReduxed } from '../src';
 
-describe('Wrong Usage', () => {
+describe(`Wrong Usage`, () => {
 
-  it('if the argument for storeCreatorContainer is missing, should throw an exception', () => {
+  it(`if the argument for storeCreatorContainer is missing, should throw an exception`, () => {
     expect(() => {
       // @ts-expect-error throw
       setupReduxed();

@@ -1,10 +1,10 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect } from 'vitest';
 import { isEqual } from '../src/utils';
 
-describe('[utils/] isEqual() function', () => {
+describe(`[utils/] isEqual() function`, () => {
   const obj = {
     one: 1,
-    two: "two",
+    two: 'two',
     three: {
       id: 1,
       value: 500
@@ -12,10 +12,10 @@ describe('[utils/] isEqual() function', () => {
     four: [2, 3, 4]
   };
 
-  it("isEqual(object, same_as_object) = true", async () => {
+  it(`isEqual(object, same_as_object) = true`, async () => {
     const sameAsObj = {
       one: 1,
-      two: "two",
+      two: 'two',
       three: {
         id: 1,
         value: 500
@@ -26,10 +26,10 @@ describe('[utils/] isEqual() function', () => {
     expect(ret).to.eql(true);
   });
 
-  it("isEqual(object, other_object) = false", async () => {
+  it(`isEqual(object, other_object) = false`, async () => {
     const otherObj = {
       one: 1,
-      two: "two",
+      two: 'two',
       three: {
         id: 2,
         value: 500
@@ -40,7 +40,7 @@ describe('[utils/] isEqual() function', () => {
     expect(ret).to.eql(false);
   });
 
-  it("isEqual(array, array-like_object) = false", async () => {
+  it(`isEqual(array, array-like_object) = false`, async () => {
     const arr = [
       'one', 'two', 'three'
     ];

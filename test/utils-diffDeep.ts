@@ -1,10 +1,10 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect } from 'vitest';
 import { diffDeep } from '../src/utils';
 
-describe('[utils/] diffDeep() function', () => {
+describe(`[utils/] diffDeep() function`, () => {
   const obj = {
     one: 1,
-    two: "two",
+    two: 'two',
     three: {
       id: 1,
       value: 500
@@ -12,10 +12,10 @@ describe('[utils/] diffDeep() function', () => {
     four: [2, 3, 4]
   };
 
-  it("diffDeep(object, other_object) = deep difference between object and other_object", async () => {
+  it(`diffDeep(object, other_object) = deep difference between object and other_object`, async () => {
     const otherObj = {
       one: 1,
-      two: "two",
+      two: 'two',
       three: {
         id: 1,
         value: 700
@@ -32,17 +32,17 @@ describe('[utils/] diffDeep() function', () => {
     expect(ret).to.eql(diff);
   });
 
-  it("diffDeep(object, other_object) = deep difference between object and other_object", async () => {
+  it(`diffDeep(object, other_object) = deep difference between object and other_object`, async () => {
     const otherObj = {
       one: 1,
-      two: "two",
+      two: 'two',
       three: {
         id: 1,
         value: 500,
         v: 1
       },
       four: [2, 3, 4],
-      five: "five"
+      five: 'five'
     };
     const ret = diffDeep(obj, otherObj);
     const diff = {
@@ -54,10 +54,10 @@ describe('[utils/] diffDeep() function', () => {
     expect(ret).to.eql(diff);
   });
 
-  it("diffDeep(object, same_as_object) = undefined", async () => {
+  it(`diffDeep(object, same_as_object) = undefined`, async () => {
     const sameAsObj = {
       one: 1,
-      two: "two",
+      two: 'two',
       three: {
         id: 1,
         value: 500
