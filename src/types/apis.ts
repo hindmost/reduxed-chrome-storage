@@ -57,6 +57,8 @@ export interface ChromeNamespace extends ApisNamespace {
   storage: {
     local: StorageAreaCallbacked;
     sync: StorageAreaCallbacked;
+    managed: StorageAreaCallbacked;
+    session: StorageAreaCallbacked;
     onChanged: ApisNamespace['storage']['onChanged'];
   }
 }
@@ -65,6 +67,8 @@ export interface BrowserNamespace extends ApisNamespace {
   storage: {
     local: StorageAreaPromised;
     sync: StorageAreaPromised;
+    managed: StorageAreaPromised;
+    session: StorageAreaPromised;
     onChanged: ApisNamespace['storage']['onChanged'];
   }
 }
