@@ -73,29 +73,11 @@ export default class ReduxedStorage<
   }
 
   init(): Promise<ExtendedStore> {
-    this.tmstamp || this.isolated ||
-    this.storage.subscribe( (data, oldData) => {
-      const [ state, id, timestamp ] = unpackState(data);
-      if (id === this.id || isEqual(state, this.state))
-        return;
-      const newTime = timestamp >= this.tmstamp;
-      const newState = newTime ?
-        mergeOrReplace(this.state, state, true) :
-        mergeOrReplace(state, this.state, true);
-      if (!newTime && isEqual(newState, this.state))
-        return;
-      this._setState(newState, timestamp);
-      this._renewStore();
-      if (!isEqual(newState, state)) {
-        this._send2Storage();
-      }
-      this._callListeners();
-    });
-    const defaultState = this.store.getState();
-    // return a promise to be resolved when the last state (if any)
+    // return a promise to be resolved when the last saved state (if any)
     // is restored from chrome.storage
     return new Promise( resolve => {
-      this.storage.load( data => {
+      const defaultState = this.store.getState();
+      this.tmstamp? resolve(this as ExtendedStore) : this.storage.load(data => {
         const [storedState, , timestamp] = unpackState(data);
         let newState = storedState?
           mergeOrReplace(defaultState, storedState) : defaultState;
@@ -105,6 +87,21 @@ export default class ReduxedStorage<
         this._setState(newState, timestamp);
         this._renewStore();
         isEqual(newState, storedState) || this._send2Storage();
+        this.isolated || this.storage.subscribe( (data, oldData) => {
+          const [ state, id, timestamp ] = unpackState(data);
+          if (id === this.id || isEqual(state, this.state))
+            return;
+          const newTime = timestamp >= this.tmstamp;
+          const newState = newTime ?
+            mergeOrReplace(this.state, state, true) :
+            mergeOrReplace(state, this.state, true);
+          if (!newTime && isEqual(newState, this.state))
+            return;
+          this._setState(newState, timestamp);
+          this._renewStore();
+          isEqual(newState, state) || this._send2Storage();
+          this._callListeners();
+        });
         resolve(this as ExtendedStore);
       });
     });
