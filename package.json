@@ -38,7 +38,7 @@
   "devDependencies": {
     "redux": "^5",
     "@reduxjs/toolkit": "2",
-    "rollup-plugin-license": "^2.8",
+    "rollup-plugin-license": "^3.7",
     "tsdown": "^0.22",
     "typescript": "^7.0",
     "uuid": "^14",
