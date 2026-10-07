@@ -1,5 +1,5 @@
 import type {
-  ApisNamespace, StorageAreaName, StorageAreaQuotas, StorageData
+  ApisNamespace, StorageCutAreaName, StorageAreaQuotas, StorageData
 } from './types/apis';
 import { ErrorListener } from './types/listeners';
 
@@ -15,7 +15,7 @@ const usageSize = (data: StorageData) =>
 
 export default abstract class WrappedStorage<N extends ApisNamespace> {
   ns: N;
-  areaName: StorageAreaName;
+  areaName: StorageCutAreaName;
   key: string;
   listeners: StorageListener[];
   errListeners: ErrorListener[];
